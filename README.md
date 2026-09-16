@@ -211,3 +211,25 @@ HTML/CSS/Bootstrap/JavaScript
 ```
 
 Backend integration, real authentication, database access, QR generation, payments, and persistent route or booking changes will be implemented in a later step. This frontend prompt intentionally stops before that integration.
+
+## Java Model Classes and Basic Database Operations
+
+Module 4 adds simple Java model classes under `src/com/busticket/model/`. `User`, `Admin`, `Route`, `Booking`, `Ticket`, and `Invoice` represent the matching Oracle tables. Their private fields, constructors, getters, setters, and readable `toString()` methods demonstrate basic encapsulation.
+
+The single `DatabaseOperations` class contains the first JDBC operations for users, admins, routes, bookings, tickets, and invoices. It uses `PreparedStatement`, `ResultSet`, try-with-resources, and the existing `DBConnection` class. Separate DAO and service layers have intentionally not been added.
+
+The basic Java architecture is:
+
+```text
+Java Model Classes
+        ↓
+DatabaseOperations
+        ↓
+DBConnection
+        ↓
+JDBC
+        ↓
+Oracle 21c XE
+```
+
+`DatabaseOperationsTest` is a small executable test for finding a sample user and admin, loading routes, and searching for a route. It uses the sample data from the database scripts and does not implement login, booking workflow, QR generation, or frontend integration.
