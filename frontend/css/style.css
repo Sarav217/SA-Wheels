@@ -1,0 +1,105 @@
+/* Shared styles for the static college-project frontend. Bootstrap handles most layout. */
+:root {
+    --bus-blue: #0d47a1;
+    --bus-light: #eef5ff;
+    --bus-dark: #18324b;
+}
+
+body {
+    background-color: #f7f9fc;
+    color: #243447;
+    min-height: 100vh;
+}
+
+.navbar-brand {
+    font-weight: 700;
+}
+
+.page-header {
+    background-color: var(--bus-light);
+    border-bottom: 1px solid #dce7f5;
+    padding: 2.5rem 0;
+}
+
+.page-header h1 {
+    color: var(--bus-dark);
+}
+
+.hero-section {
+    background-color: var(--bus-blue);
+    color: white;
+    padding: 4rem 0;
+}
+
+.search-panel,
+.form-card,
+.dashboard-card,
+.ticket-card,
+.invoice-card {
+    border: 0;
+    box-shadow: 0 0.2rem 0.8rem rgba(24, 50, 75, 0.08);
+}
+
+.search-panel {
+    margin-top: -2rem;
+    position: relative;
+}
+
+.dashboard-card {
+    height: 100%;
+}
+
+.dashboard-card .card-title {
+    color: var(--bus-blue);
+}
+
+.ticket-card,
+.invoice-card {
+    border-top: 4px solid var(--bus-blue);
+}
+
+.qr-placeholder {
+    align-items: center;
+    background: repeating-linear-gradient(45deg, #212529 0 4px, #fff 4px 8px);
+    border: 8px solid white;
+    box-shadow: 0 0 0 1px #adb5bd;
+    color: white;
+    display: flex;
+    font-size: 0.75rem;
+    height: 150px;
+    justify-content: center;
+    text-align: center;
+    width: 150px;
+}
+
+.qr-placeholder span {
+    background: #212529;
+    padding: 0.25rem;
+}
+
+.table thead th {
+    white-space: nowrap;
+}
+
+footer {
+    background-color: var(--bus-dark);
+    color: #dce7f5;
+    margin-top: 4rem;
+    padding: 1.5rem 0;
+}
+
+footer a {
+    color: white;
+}
+
+@media print {
+    .no-print,
+    footer,
+    .navbar {
+        display: none !important;
+    }
+
+    body {
+        background: white;
+    }
+}

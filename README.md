@@ -8,7 +8,7 @@ This project is designed as a college project. The implementation will use basic
 
 ## Technology Stack
 
-- Java JDK 26.0.1
+- Java JDK 17
 - Oracle Database 21c XE
 - JDBC for database connectivity
 - SQL*Plus for creating and managing database objects
@@ -141,4 +141,73 @@ The Oracle connection details, such as the database URL, username, and password,
 
 ## Java Version
 
-The project targets **Java JDK 26.0.1**. Source code should remain compatible with standard Java features supported by JDK 26 and should avoid frameworks or advanced patterns that are not necessary for this college project.
+The project targets **Java JDK 17**. Source code should remain compatible with standard Java 17 features and should avoid frameworks or advanced patterns that are not necessary for this college project.
+
+## Frontend
+
+The initial frontend is developed separately from the Java backend and Oracle database. It uses only HTML5, CSS3, Bootstrap 5, and basic JavaScript. No Java, JDBC, Oracle, React, Angular, Vue, Node.js, npm, jQuery, or other frontend framework is used at this stage.
+
+### Frontend Folder Structure
+
+```text
+frontend/
+├── index.html
+├── login.html
+├── register.html
+├── user-dashboard.html
+├── route-search.html
+├── booking.html
+├── ticket.html
+├── invoice.html
+├── travel-history.html
+├── admin-login.html
+├── admin-dashboard.html
+├── route-management.html
+├── css/
+│   └── style.css
+└── js/
+    └── script.js
+```
+
+### Frontend Pages
+
+- `index.html` provides the public home page and sample route search form.
+- `login.html` and `register.html` provide basic client-side user forms.
+- `user-dashboard.html` links users to searching, booking, tickets, and travel history.
+- `route-search.html` displays sample routes and booking links.
+- `booking.html` displays a selected route and calculates the simulated total fare.
+- `ticket.html` displays a sample ticket and QR placeholder.
+- `invoice.html` displays a sample invoice with print support.
+- `travel-history.html` displays sample previous bookings.
+- `admin-login.html` provides the frontend-only administrator login form.
+- `admin-dashboard.html` displays sample statistics and administrator navigation.
+- `route-management.html` provides a visual add-route form and sample route table.
+- `css/style.css` contains shared custom styling that complements Bootstrap.
+- `js/script.js` contains validation, password confirmation, fare calculation, print handling, and simple static form feedback.
+
+Bootstrap 5.3.3 is loaded from the jsDelivr CDN on each page. The current pages use clearly labelled sample data; they do not pretend to read data from Oracle.
+
+### Current and Future Architecture
+
+Current frontend architecture:
+
+```text
+HTML
+CSS
+Bootstrap
+JavaScript
+```
+
+Planned architecture after backend integration:
+
+```text
+HTML/CSS/Bootstrap/JavaScript
+            ↓
+       Java Backend
+            ↓
+           JDBC
+            ↓
+       Oracle 21c XE
+```
+
+Backend integration, real authentication, database access, QR generation, payments, and persistent route or booking changes will be implemented in a later step. This frontend prompt intentionally stops before that integration.
