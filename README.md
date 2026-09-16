@@ -137,7 +137,7 @@ Each module will use simple classes and methods with readable names. Database op
 
 To run the completed application, Oracle Database 21c XE must be installed and running. The project will also require a compatible Oracle JDBC driver, commonly provided as an `ojdbc` JAR file. The driver JAR may be placed in the `lib/` folder and included in the Java classpath when compiling and running the application.
 
-The Oracle connection details, such as the database URL, username, and password, will be configured when the database and JDBC module is implemented. Passwords and other private credentials should not be committed to the repository.
+The Oracle connection uses the optional `DB_URL` setting plus the required `DB_USERNAME` and `DB_PASSWORD` environment variables (or Java system properties). The URL defaults to `jdbc:oracle:thin:@localhost:1521/XEPDB1`. Passwords and other private credentials must not be committed to the repository.
 
 ## Java Version
 
@@ -145,7 +145,7 @@ The project targets **Java JDK 17**. Source code should remain compatible with s
 
 ## Frontend
 
-The initial frontend is developed separately from the Java backend and Oracle database. It uses only HTML5, CSS3, Bootstrap 5, and basic JavaScript. No Java, JDBC, Oracle, React, Angular, Vue, Node.js, npm, jQuery, or other frontend framework is used at this stage.
+The frontend uses HTML5, CSS3, Bootstrap 5, and basic JavaScript. Most pages still use sample data, while the registration, user login, admin login, and logout forms now connect to the Java Servlet module when deployed on Tomcat. No React, Angular, Vue, Node.js, npm, jQuery, or other frontend framework is used.
 
 ### Frontend Folder Structure
 
@@ -172,14 +172,14 @@ frontend/
 ### Frontend Pages
 
 - `index.html` provides the public home page and sample route search form.
-- `login.html` and `register.html` provide basic client-side user forms.
+- `login.html` and `register.html` submit user authentication forms to Java Servlets.
 - `user-dashboard.html` links users to searching, booking, tickets, and travel history.
 - `route-search.html` displays sample routes and booking links.
 - `booking.html` displays a selected route and calculates the simulated total fare.
 - `ticket.html` displays a sample ticket and QR placeholder.
 - `invoice.html` displays a sample invoice with print support.
 - `travel-history.html` displays sample previous bookings.
-- `admin-login.html` provides the frontend-only administrator login form.
+- `admin-login.html` submits the administrator login form to a Java Servlet.
 - `admin-dashboard.html` displays sample statistics and administrator navigation.
 - `route-management.html` provides a visual add-route form and sample route table.
 - `css/style.css` contains shared custom styling that complements Bootstrap.
@@ -210,7 +210,7 @@ HTML/CSS/Bootstrap/JavaScript
        Oracle 21c XE
 ```
 
-Backend integration, real authentication, database access, QR generation, payments, and persistent route or booking changes will be implemented in a later step. This frontend prompt intentionally stops before that integration.
+QR generation, payments, and persistent route or booking changes will be implemented in later modules. Authentication integration is now limited to the Module 5 forms and sessions.
 
 ## Java Model Classes and Basic Database Operations
 
@@ -231,5 +231,62 @@ JDBC
         ↓
 Oracle 21c XE
 ```
+
+## Module 5: Registration, Login, and Authentication
+
+Module 5 adds simple Servlet-based authentication for Apache Tomcat 10.1 or later. The Servlet API is provided by Tomcat and uses the `jakarta.servlet` package.
+
+### Authentication Servlets
+
+- `RegisterServlet` validates the registration form, checks for an existing email, and calls `DatabaseOperations.addUser()`.
+- `LoginServlet` checks a user's email and password, then stores the user ID and name in an HTTP session.
+- `AdminLoginServlet` checks the linked admin record and the related user's password. Because the existing `ADMIN` table has no username column, the linked user email is used as the admin username.
+- `LogoutServlet` invalidates the current session and redirects to the home page.
+- `AuthFilter` protects user and admin HTML pages from unauthenticated access.
+
+Servlet mappings are defined in `frontend/WEB-INF/web.xml`:
+
+```text
+/register       -> RegisterServlet
+/login          -> LoginServlet
+/admin-login    -> AdminLoginServlet
+/logout         -> LogoutServlet
+```
+
+### Authentication Flow
+
+```text
+User
+ ↓
+HTML Form
+ ↓
+Servlet
+ ↓
+DatabaseOperations
+ ↓
+JDBC
+ ↓
+Oracle 21c XE
+```
+
+### Testing Authentication
+
+1. Deploy the `frontend/` directory as a Tomcat web application and place the compiled Servlet classes under `WEB-INF/classes`.
+2. Make the Oracle JDBC driver available to the web application or Tomcat `lib` directory.
+3. Configure the connection before starting Tomcat. In PowerShell, for example:
+
+```powershell
+$env:DB_URL = "jdbc:oracle:thin:@localhost:1521/XEPDB1"
+$env:DB_USERNAME = "SYSTEM"
+$env:DB_PASSWORD = "your-local-password"
+```
+
+   Ensure the `USERS` and `ADMIN` tables and sample data exist in the same schema and service.
+4. Open `/register.html` to test registration.
+5. Open `/login.html` to test user login and `/admin-login.html` to test admin login.
+6. Verify that protected pages redirect to the appropriate login page without a session.
+7. Use the Logout link and verify that the session is invalidated.
+
+The authentication source requires the Jakarta Servlet API supplied by Tomcat 10.1+. Tomcat and its Servlet API were not installed in this workspace, so deployment testing requires a local Tomcat installation. Passwords are used only for this simple college-project flow and are not printed in messages or logs.
 
 `DatabaseOperationsTest` is a small executable test for finding a sample user and admin, loading routes, and searching for a route. It uses the sample data from the database scripts and does not implement login, booking workflow, QR generation, or frontend integration.

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
+
+    <!-- Servlet mappings for the simple authentication module. -->
+    <servlet>
+        <servlet-name>RegisterServlet</servlet-name>
+        <servlet-class>com.busticket.web.RegisterServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>RegisterServlet</servlet-name>
+        <url-pattern>/register</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>LoginServlet</servlet-name>
+        <servlet-class>com.busticket.web.LoginServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>LoginServlet</servlet-name>
+        <url-pattern>/login</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>AdminLoginServlet</servlet-name>
+        <servlet-class>com.busticket.web.AdminLoginServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AdminLoginServlet</servlet-name>
+        <url-pattern>/admin-login</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>LogoutServlet</servlet-name>
+        <servlet-class>com.busticket.web.LogoutServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>LogoutServlet</servlet-name>
+        <url-pattern>/logout</url-pattern>
+    </servlet-mapping>
+
+    <filter>
+        <filter-name>AuthFilter</filter-name>
+        <filter-class>com.busticket.web.AuthFilter</filter-class>
+    </filter>
+    <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/user-dashboard.html</url-pattern></filter-mapping>
+    <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/route-search.html</url-pattern></filter-mapping>
+    <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/booking.html</url-pattern></filter-mapping>
+    <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/ticket.html</url-pattern></filter-mapping>
+    <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/invoice.html</url-pattern></filter-mapping>
+    <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/travel-history.html</url-pattern></filter-mapping>
+    <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/admin-dashboard.html</url-pattern></filter-mapping>
+    <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/route-management.html</url-pattern></filter-mapping>
+
+    <welcome-file-list><welcome-file>index.html</welcome-file></welcome-file-list>
+</web-app>

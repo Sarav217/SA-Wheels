@@ -1,5 +1,26 @@
 // Basic frontend-only interactions. No backend or database calls are made here.
 document.addEventListener('DOMContentLoaded', () => {
+    const messages = {
+        'missing-fields': ['Please complete all required fields.', 'danger'],
+        'invalid-email': ['Please enter a valid email address.', 'danger'],
+        'invalid-phone': ['Please enter a valid 10-digit phone number.', 'danger'],
+        'password-mismatch': ['Passwords do not match.', 'danger'],
+        'email-exists': ['That email address is already registered.', 'danger'],
+        'invalid-credentials': ['Invalid email or password.', 'danger'],
+        'login-required': ['Please log in to access that page.', 'warning'],
+        registered: ['Registration successful. You can now log in.', 'success'],
+        'logged-out': ['You have been logged out.', 'success']
+    };
+    const messageKey = new URLSearchParams(window.location.search).get('error')
+        || new URLSearchParams(window.location.search).get('success');
+    const pageMessage = messages[messageKey];
+    if (pageMessage) {
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${pageMessage[1]} mb-3`;
+        alert.textContent = pageMessage[0];
+        document.querySelector('main')?.prepend(alert);
+    }
+
     const bookingForm = document.querySelector('#bookingForm');
     const passengerCount = document.querySelector('#passengerCount');
     const totalFare = document.querySelector('#totalFare');
