@@ -287,7 +287,7 @@ $env:DB_PASSWORD = "your-local-password"
 6. Verify that protected pages redirect to the appropriate login page without a session.
 7. Use the Logout link and verify that the session is invalidated.
 
-The authentication source requires the Jakarta Servlet API supplied by Tomcat 10.1+. Tomcat and its Servlet API were not installed in this workspace, so deployment testing requires a local Tomcat installation. Passwords are used only for this simple college-project flow and are not printed in messages or logs.
+The authentication source requires the Jakarta Servlet API supplied by Tomcat 10.1+. Passwords are used only for this simple college-project flow and are not printed in messages or logs.
 
 ## Module 6: Route Management, Route Search, and Fare Calculation
 
@@ -389,4 +389,72 @@ The `ROUTES` table still supplies source and destination details; those values a
 
 ZXing dependencies used by the QR generator are stored in `lib/core-3.5.3.jar` and `lib/javase-3.5.3.jar`. They must be available to the Java compiler and Tomcat web application along with `ojdbc11.jar`.
 
-`DatabaseOperationsTest` is a small executable test for finding a sample user and admin, loading routes, and searching for a route. It uses the sample data from the database scripts and does not implement login, booking workflow, QR generation, or frontend integration.
+## Module 9: Complete Frontend, Servlet, and Oracle Integration
+
+The current integration keeps the existing project architecture:
+
+```text
+HTML + Bootstrap + JavaScript
+              ↓
+        Java Servlets
+              ↓
+     DatabaseOperations.java
+              ↓
+       DBConnection.java
+              ↓
+          Oracle 21c XE
+```
+
+No DAO classes, Service classes, duplicate connection classes, or SQL inside HTML pages were added.
+
+### Deployment Structure
+
+Deploy the `frontend/` directory as the Tomcat web application root. It already contains `WEB-INF/web.xml`. Compile all Java sources into `frontend/WEB-INF/classes` and make these JAR files available in `frontend/WEB-INF/lib` or Tomcat's `lib` directory:
+
+```text
+lib/ojdbc11.jar
+lib/core-3.5.3.jar
+lib/javase-3.5.3.jar
+```
+
+The application targets Apache Tomcat 10.1+ and Jakarta Servlet 6.0.
+
+### Manual Tomcat Build and Run
+
+From PowerShell, after setting `CATALINA_HOME` to the Tomcat installation directory:
+
+```powershell
+$env:DB_URL = "jdbc:oracle:thin:@localhost:1521/XEPDB1"
+$env:DB_USERNAME = "SYSTEM"
+$env:DB_PASSWORD = "your-local-password"
+
+New-Item -ItemType Directory -Force frontend/WEB-INF/classes | Out-Null
+New-Item -ItemType Directory -Force frontend/WEB-INF/lib | Out-Null
+Copy-Item lib/*.jar frontend/WEB-INF/lib/ -Force
+
+$servletApi = "$env:CATALINA_HOME/lib/servlet-api.jar"
+$classpath = "lib/ojdbc11.jar;lib/core-3.5.3.jar;lib/javase-3.5.3.jar;$servletApi"
+$sources = Get-ChildItem src -Recurse -Filter *.java | Select-Object -ExpandProperty FullName
+& "C:/Program Files/Java/jdk-17/bin/javac.exe" -cp $classpath -d frontend/WEB-INF/classes $sources
+
+& "$env:CATALINA_HOME/bin/startup.bat"
+```
+
+Open the deployed context, then test `/register.html`, `/login.html`, `/route-search.html`, `/booking.html`, `/travel-history.html`, and `/admin-login.html`.
+
+Before testing booking, run the database scripts in order. Apply the Module 7 migration only when upgrading an older schema that does not already contain `PASSENGER_COUNT`:
+
+```sql
+@database/01_create_tables.sql
+@database/02_insert_sample_data.sql
+-- For an older pre-Module 7 schema only:
+@database/04_module7_booking_passenger_count.sql
+```
+
+The migration is only needed when the tables already exist from before Module 7. Do not run the base table script repeatedly on an existing schema.
+
+### Integration Status
+
+Tomcat 10.1.60 was installed locally and the application was deployed and tested at `http://localhost:8080/PublicTransportTicketingSystem/`. The source code, Servlet mappings, frontend form targets, session filters, JDK 17 compilation, Oracle connection, user flow, booking flow, QR generation, invoice/history endpoints, and admin route CRUD were verified. Database credentials are supplied through local environment variables and must not be committed.
+
+`DatabaseOperationsTest` is a small executable regression test for finding a sample user and admin, loading routes, and searching for a route. The deployed integration flow is tested separately through Tomcat HTTP requests.

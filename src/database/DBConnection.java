@@ -1,8 +1,9 @@
 package database;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
+import java.sql.Driver;
 import java.sql.SQLException;
+import java.util.Properties;
 
 public class DBConnection {
 
@@ -19,7 +20,25 @@ public class DBConnection {
                     "Database credentials are not configured. Set DB_USERNAME and DB_PASSWORD.");
         }
 
-        return DriverManager.getConnection(url, username, password);
+        // Explicit loading keeps the Oracle driver available when Tomcat uses
+        // a separate web application classloader.
+        try {
+            Driver driver = (Driver) Class.forName("oracle.jdbc.OracleDriver")
+                    .getDeclaredConstructor()
+                    .newInstance();
+            Properties properties = new Properties();
+            properties.setProperty("user", username);
+            properties.setProperty("password", password);
+            Connection connection = driver.connect(url, properties);
+            if (connection == null) {
+                throw new SQLException("Oracle JDBC driver could not connect to the configured URL.");
+            }
+            return connection;
+        } catch (ClassNotFoundException exception) {
+            throw new SQLException("Oracle JDBC driver was not found.", exception);
+        } catch (ReflectiveOperationException exception) {
+            throw new SQLException("Oracle JDBC driver could not be initialized.", exception);
+        }
     }
 
     private static String setting(String name, String defaultValue) {

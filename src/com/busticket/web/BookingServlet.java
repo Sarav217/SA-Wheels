@@ -50,7 +50,8 @@ public class BookingServlet extends HttpServlet {
 
             BigDecimal totalFare = route.getFare().multiply(BigDecimal.valueOf(passengerCount));
             String uniqueToken = UUID.randomUUID().toString();
-            String seatReference = "AUTO-" + uniqueToken.substring(0, 6).toUpperCase();
+            // SEAT_NUMBER is VARCHAR2(10) in Oracle: AUTO- plus five characters.
+            String seatReference = "AUTO-" + uniqueToken.substring(0, 5).toUpperCase();
             String ticketNumber = "TKT-" + uniqueToken.substring(0, 12).toUpperCase();
             String invoiceNumber = "INV-" + uniqueToken.substring(0, 12).toUpperCase();
 
