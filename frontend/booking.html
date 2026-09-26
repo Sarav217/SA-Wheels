@@ -22,7 +22,6 @@
                 <div class="card form-card mt-4">
                     <div class="card-body">
                         <h2 class="h5">Selected route</h2>
-                        <input id="selectedRouteId" name="routeId" type="hidden" value="">
                         <dl class="row mb-0">
                             <dt class="col-5">Route</dt><dd id="selectedRouteNumber" class="col-7">R101</dd>
                             <dt class="col-5">Source</dt><dd id="selectedSource" class="col-7">Chennai Central</dd>
@@ -38,6 +37,8 @@
                 <div class="card form-card">
                     <div class="card-body p-4">
                         <form id="bookingForm" class="needs-validation" action="booking" method="post" novalidate>
+                            <!-- This hidden value must be inside the form so the servlet receives the route ID. -->
+                            <input id="selectedRouteId" name="routeId" type="hidden" value="">
                             <input id="farePerPassenger" type="hidden" value="35">
                             <div class="mb-3">
                                 <label class="form-label" for="passengerName">Passenger name</label>
@@ -55,7 +56,9 @@
                             <div class="mb-3">
                                 <label class="form-label" for="paymentMethod">Payment method</label>
                                 <select id="paymentMethod" name="paymentMethod" class="form-select" required>
-                                    <option>UPI</option><option>Card</option><option>Cash</option>
+                                    <option value="UPI">UPI</option>
+                                    <option value="CARD">Card</option>
+                                    <option value="CASH">Cash</option>
                                 </select>
                             </div>
                             <div class="border-top pt-3 mb-3 d-flex justify-content-between">
@@ -74,10 +77,22 @@
 
     <footer><div class="container text-center"><p class="mb-0">Fare = base fare × number of passengers.</p></div></footer>
     <script>
-        // Preserve the selected route ID for the shared JavaScript loader.
+        // Use the browser's local date. toISOString() uses UTC and can show
+        // yesterday for users in time zones ahead of UTC, such as India.
+        function localDateString() {
+            const now = new Date();
+            const localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+            return localNow.toISOString().slice(0, 10);
+        }
+
+        // Preserve the selected route ID and travel date for the booking form.
         const bookingParams = new URLSearchParams(window.location.search);
-        document.getElementById('selectedRouteId').value = bookingParams.get('routeId') || '';
-        document.getElementById('travelDate').value = bookingParams.get('travelDate') || new Date().toISOString().slice(0, 10);
+        const localToday = localDateString();
+        // The default R101 sample shown on this page is route ID 1 in the
+        // Oracle sample data. Search results still provide their own route ID.
+        document.getElementById('selectedRouteId').value = bookingParams.get('routeId') || '1';
+        document.getElementById('travelDate').value = bookingParams.get('travelDate') || localToday;
+        document.getElementById('travelDate').min = localToday;
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/script.js"></script>

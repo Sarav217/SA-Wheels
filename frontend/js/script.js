@@ -127,6 +127,13 @@ function setupRouteSearchPage() {
     const results = document.querySelector('#routeResults');
     if (!form || !results) return;
 
+    const dateInput = document.querySelector('#searchDate');
+    const localToday = getLocalDateString();
+    if (dateInput) {
+        dateInput.min = localToday;
+        if (!dateInput.value) dateInput.value = localToday;
+    }
+
     const sourceSelect = document.querySelector('#searchSource');
     const destinationSelect = document.querySelector('#searchDestination');
 
@@ -188,6 +195,12 @@ function addSelectOptions(select, values, placeholder) {
         option.textContent = value;
         select.appendChild(option);
     });
+}
+
+function getLocalDateString() {
+    const now = new Date();
+    const localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    return localNow.toISOString().slice(0, 10);
 }
 
 function renderRouteResults(container, routes) {
