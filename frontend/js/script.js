@@ -18,9 +18,11 @@ function showUrlMessage() {
         'missing-fields': ['Please complete all required fields.', 'danger'],
         'invalid-email': ['Please enter a valid email address.', 'danger'],
         'invalid-phone': ['Please enter a valid 10-digit phone number.', 'danger'],
+        'invalid-password': ['Password must contain at least 6 characters.', 'danger'],
         'password-mismatch': ['Passwords do not match.', 'danger'],
         'email-exists': ['That email address is already registered.', 'danger'],
         'invalid-credentials': ['Invalid email or password.', 'danger'],
+        'database-error': ['The request could not be completed. Please check the server and try again.', 'danger'],
         'login-required': ['Please log in to access that page.', 'warning'],
         'route-unavailable': ['The selected route is unavailable.', 'danger'],
         'invalid-booking': ['Please check the route, date, payment method, and passenger count.', 'danger'],
@@ -125,6 +127,26 @@ function setupRouteSearchPage() {
     const results = document.querySelector('#routeResults');
     if (!form || !results) return;
 
+    const sourceSelect = document.querySelector('#searchSource');
+    const destinationSelect = document.querySelector('#searchDestination');
+
+    // Load the filter options from Oracle instead of keeping only sample values
+    // in the HTML page. This makes imported MTC routes searchable in the UI.
+    const populateRouteFilters = async () => {
+        try {
+            const response = await fetch('route-search');
+            const routes = await response.json();
+            if (!response.ok) throw new Error(routes.error || 'Route loading failed.');
+
+            const sources = [...new Set(routes.map((route) => route.source))].sort();
+            const destinations = [...new Set(routes.map((route) => route.destination))].sort();
+            addSelectOptions(sourceSelect, sources, 'Choose source');
+            addSelectOptions(destinationSelect, destinations, 'Choose destination');
+        } catch (error) {
+            showSearchMessage('Route options could not be loaded. Check Tomcat and Oracle.', true);
+        }
+    };
+
     const loadRoutes = async (source = '', destination = '') => {
         const query = new URLSearchParams({ source, destination });
         try {
@@ -148,6 +170,23 @@ function setupRouteSearchPage() {
             document.querySelector('#searchSource').value,
             document.querySelector('#searchDestination').value
         );
+    });
+
+    populateRouteFilters();
+}
+
+function addSelectOptions(select, values, placeholder) {
+    if (!select) return;
+    select.replaceChildren();
+    const firstOption = document.createElement('option');
+    firstOption.value = '';
+    firstOption.textContent = placeholder;
+    select.appendChild(firstOption);
+    values.forEach((value) => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = value;
+        select.appendChild(option);
     });
 }
 

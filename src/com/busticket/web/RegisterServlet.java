@@ -43,6 +43,11 @@ public class RegisterServlet extends HttpServlet {
             return;
         }
 
+        if (password.length() < 6) {
+            redirectWithMessage(request, response, "register.html", "error", "invalid-password");
+            return;
+        }
+
         if (!PHONE_PATTERN.matcher(phoneNumber).matches()) {
             redirectWithMessage(request, response, "register.html", "error", "invalid-phone");
             return;
@@ -69,7 +74,8 @@ public class RegisterServlet extends HttpServlet {
 
             redirectWithMessage(request, response, "register.html", "success", "registered");
         } catch (SQLException exception) {
-            throw new ServletException("Registration could not be completed.", exception);
+            // Keep database details out of the browser and show a simple user message.
+            redirectWithMessage(request, response, "register.html", "error", "database-error");
         }
     }
 

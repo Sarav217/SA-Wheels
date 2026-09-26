@@ -458,3 +458,66 @@ The migration is only needed when the tables already exist from before Module 7.
 Tomcat 10.1.60 was installed locally and the application was deployed and tested at `http://localhost:8080/PublicTransportTicketingSystem/`. The source code, Servlet mappings, frontend form targets, session filters, JDK 17 compilation, Oracle connection, user flow, booking flow, QR generation, invoice/history endpoints, and admin route CRUD were verified. Database credentials are supplied through local environment variables and must not be committed.
 
 `DatabaseOperationsTest` is a small executable regression test for finding a sample user and admin, loading routes, and searching for a route. The deployed integration flow is tested separately through Tomcat HTTP requests.
+
+## Module 10: Testing, Error Handling, and Final Integration
+
+Module 10 verifies the complete architecture without adding DAO or Service layers:
+
+```text
+Frontend -> Java Servlets -> DatabaseOperations.java -> DBConnection.java -> Oracle 21c XE
+```
+
+### Error Handling
+
+- Servlets validate required fields, email format, password confirmation, passenger count, route IDs, dates, payment methods, and route times.
+- Database exceptions are handled inside the request flow and shown as simple error messages or JSON error responses.
+- Oracle/JDBC details and passwords are not displayed in the browser.
+- Sessions are checked before protected user and administrator operations.
+- `DatabaseOperations.java` uses prepared statements, try-with-resources, transaction rollback for complete bookings, and meaningful SQL error messages.
+
+### Final Test Coverage
+
+The final local test run used JDK 17, Apache Tomcat 10.1.60, Oracle 21c XE, and the sample schema/data. The following checks passed:
+
+- Public home page and Java compilation
+- User registration, invalid registration, duplicate email, and invalid password input
+- Valid and invalid user login
+- Valid and invalid admin login
+- Anonymous access redirection and logout/session invalidation
+- USER access blocked from administrator pages and route-management requests
+- Route search and invalid source/destination input
+- Invalid passenger count and fare calculation for two and five passengers
+- Ticket details and unique booking records
+- QR code response generation as a PNG image
+- Invoice generation and travel history retrieval
+- Administrator route listing, add, update, and delete operations
+- `DatabaseOperationsTest` for user, admin, route list, and route search JDBC operations
+
+The verified application URL is:
+
+```text
+http://localhost:8080/PublicTransportTicketingSystem/
+```
+
+### Final Run Checklist
+
+1. Start Oracle Database 21c XE and confirm the `XEPDB1` service is available.
+2. Set `JAVA_HOME` to the JDK 17 installation and `CATALINA_HOME` to Apache Tomcat.
+3. Set `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD` in the same terminal used to start Tomcat.
+4. Run `startup.bat` from Tomcat's `bin` folder.
+5. Open the verified application URL.
+6. Run `shutdown.bat` when the local test server is no longer required.
+
+Generated Tomcat classes and runtime libraries are kept outside the Git repository deployment copy. Database credentials must remain local and must not be committed.
+
+## MTC Route Data Import
+
+The Oracle `ROUTES` table was populated from the official MTC route-wise information source:
+
+<https://mtcbus.tn.gov.in/Home/bustimingsearch>
+
+The source page listed 693 route options. The route-wise endpoint returned usable origin and destination values for 676 unique records, which were inserted with an Oracle `MERGE` so the import can be repeated without duplicating route numbers. The database now contains 684 routes: 676 imported MTC routes and the original 8 project sample routes.
+
+Important data limitation: the MTC route-wise response provides route, origin, destination, and stage information, but not a route-specific fare and departure/arrival pair in the same response. Imported MTC records use `00:00` departure and `01:00` arrival as schedule placeholders. Development fares were assigned randomly in the `10.00`–`80.00` range so that fare calculation and booking can be tested; these are not official MTC fares and must be replaced with verified fare data before real ticket sales. Seventeen source options were excluded because the endpoint returned no usable route details or the values violated the project table constraints, such as identical source and destination.
+
+The route search frontend now loads its source and destination dropdowns from the database through `RouteSearchServlet`; it is no longer limited to the original sample options. The official MTC page identifies its timing schedule as the latest schedule and displays its update date; route-wise data should be refreshed when MTC publishes changes. The project’s `ROUTES` table keeps the simple college-project schema and does not store all individual intermediate stages from the MTC site.

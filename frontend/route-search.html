@@ -27,20 +27,12 @@
                         <label class="form-label" for="searchSource">Source</label>
                         <select id="searchSource" class="form-select" required>
                             <option value="">Choose source</option>
-                            <option>Chennai Central</option>
-                            <option>Koyambedu</option>
-                            <option>Adyar</option>
-                            <option>Velachery</option>
                         </select>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label" for="searchDestination">Destination</label>
                         <select id="searchDestination" class="form-select" required>
                             <option value="">Choose destination</option>
-                            <option>Tambaram</option>
-                            <option>Guindy</option>
-                            <option>Anna Nagar</option>
-                            <option>T Nagar</option>
                         </select>
                     </div>
                     <div class="col-md-4">
@@ -55,7 +47,7 @@
             </div>
         </div>
 
-        <!-- Route data is loaded from RouteSearchServlet when deployed on Tomcat. -->
+        <!-- Route filters and results are loaded from Oracle through RouteSearchServlet. -->
         <div class="table-responsive">
             <table class="table table-striped table-hover align-middle">
                 <thead class="table-primary">
@@ -82,6 +74,6 @@
         <div class="container text-center"><p class="mb-0">Routes are loaded from Oracle through the Java Servlet.</p></div>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/script.js"></script>
+    <script src="js/script.js?v=10"></script>
 </body>
 </html>

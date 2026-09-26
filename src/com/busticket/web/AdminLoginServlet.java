@@ -12,10 +12,13 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.regex.Pattern;
 
 /** Handles the simple administrator login form. */
 public class AdminLoginServlet extends HttpServlet {
 
+    private static final Pattern EMAIL_PATTERN =
+            Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
     private final DatabaseOperations databaseOperations = new DatabaseOperations();
 
     @Override
@@ -26,6 +29,10 @@ public class AdminLoginServlet extends HttpServlet {
 
         if (username.isBlank() || password == null || password.isBlank()) {
             redirectToAdminLogin(request, response, "missing-fields");
+            return;
+        }
+        if (!EMAIL_PATTERN.matcher(username).matches()) {
+            redirectToAdminLogin(request, response, "invalid-email");
             return;
         }
 
@@ -45,7 +52,8 @@ public class AdminLoginServlet extends HttpServlet {
             session.setAttribute("adminRole", admin.getAdminRole());
             response.sendRedirect(request.getContextPath() + "/admin-dashboard.html");
         } catch (SQLException exception) {
-            throw new ServletException("Admin login could not be completed.", exception);
+            // Keep database details out of the browser and show a simple message.
+            redirectToAdminLogin(request, response, "database-error");
         }
     }
 

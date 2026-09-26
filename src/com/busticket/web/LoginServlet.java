@@ -11,10 +11,13 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.regex.Pattern;
 
 /** Handles user login and creates a simple user session. */
 public class LoginServlet extends HttpServlet {
 
+    private static final Pattern EMAIL_PATTERN =
+            Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
     private final DatabaseOperations databaseOperations = new DatabaseOperations();
 
     @Override
@@ -25,6 +28,10 @@ public class LoginServlet extends HttpServlet {
 
         if (email.isBlank() || password == null || password.isBlank()) {
             redirectToLogin(request, response, "missing-fields");
+            return;
+        }
+        if (!EMAIL_PATTERN.matcher(email).matches()) {
+            redirectToLogin(request, response, "invalid-email");
             return;
         }
 
@@ -43,7 +50,8 @@ public class LoginServlet extends HttpServlet {
             session.setAttribute("userRole", "USER");
             response.sendRedirect(request.getContextPath() + "/user-dashboard.html");
         } catch (SQLException exception) {
-            throw new ServletException("Login could not be completed.", exception);
+            // Do not expose JDBC or Oracle details in the browser.
+            redirectToLogin(request, response, "database-error");
         }
     }
 
