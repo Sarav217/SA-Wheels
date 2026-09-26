@@ -289,4 +289,104 @@ $env:DB_PASSWORD = "your-local-password"
 
 The authentication source requires the Jakarta Servlet API supplied by Tomcat 10.1+. Tomcat and its Servlet API were not installed in this workspace, so deployment testing requires a local Tomcat installation. Passwords are used only for this simple college-project flow and are not printed in messages or logs.
 
+## Module 6: Route Management, Route Search, and Fare Calculation
+
+Module 6 continues the existing architecture without adding DAO or Service classes:
+
+```text
+Frontend JavaScript
+        ↓
+Route Servlet
+        ↓
+DatabaseOperations.java
+        ↓
+Oracle JDBC connection
+        ↓
+Oracle 21c XE
+```
+
+### Route Features
+
+- `RouteManagementServlet` provides admin-only add, edit, delete, and list operations.
+- `RouteSearchServlet` provides logged-in user route searches by source and destination.
+- `DatabaseOperations` now contains `addRoute`, `updateRoute`, `deleteRoute`, and `getRouteById` methods.
+- `frontend/route-management.html` loads routes and sends admin CRUD requests.
+- `frontend/route-search.html` loads current route data and provides booking links with the selected route ID.
+- Route management and route search endpoints are protected by the existing `AuthFilter`.
+
+### Fare Calculation
+
+The booking page loads the selected route's base fare and calculates:
+
+```text
+Total fare = base fare × number of passengers
+```
+
+Passenger counts must be between 1 and 6. The fare is calculated in the browser for this module; ticket creation and persistent booking will be implemented later.
+
+### Route Schema Note
+
+The existing Oracle `ROUTES` table contains route number, source, destination, departure time, arrival time, fare, and status. It does not contain a stops column. Therefore, Module 6 displays `Not configured` for stops and calculates travel time from the departure and arrival values. The database schema was not changed.
+
+Route times entered by the admin use `HH:mm` and are stored as Oracle `DATE` values using a common schedule date. Arrival must be later than departure for the current schema constraint.
+
+## Module 7: Ticket Booking, QR Code, Invoice, and Travel History
+
+Module 7 adds the logged-in user booking flow using the existing `DatabaseOperations.java` architecture. No DAO, Service, or additional database connection class was created.
+
+### Module 7 Components
+
+- `BookingServlet` validates the selected route, travel date, payment method, and passenger count, calculates the total fare, and creates the booking, ticket, and invoice in one database transaction.
+- `TravelHistoryServlet` returns bookings belonging only to the current user.
+- `TicketServlet` returns ticket details after checking that the booking belongs to the current user.
+- `InvoiceServlet` returns invoice details for the current user's booking.
+- `QrCodeServlet` streams the ticket QR image after checking the user session and booking ownership.
+- `QrCodeGenerator` uses ZXing to generate a PNG QR image from the stored ticket payload.
+
+The new Servlet mappings are:
+
+```text
+/booking        -> BookingServlet
+/travel-history -> TravelHistoryServlet
+/ticket         -> TicketServlet
+/invoice        -> InvoiceServlet
+/ticket-qr      -> QrCodeServlet
+```
+
+### Booking Flow
+
+```text
+Logged-in user selects route
+            ↓
+Booking form submits route, date, passengers, and payment method
+            ↓
+BookingServlet validates and calculates total fare
+            ↓
+DatabaseOperations creates BOOKING, TICKET, and INVOICE transactionally
+            ↓
+User is redirected to the generated ticket and QR image
+```
+
+The total fare is calculated as:
+
+```text
+base fare × number of passengers
+```
+
+Passenger count is limited to 1 through 6. The QR payload contains the final booking ID, user ID, route ID, source, destination, passenger count, and fare. A unique ticket number and QR payload are generated for each booking.
+
+### Database Migration
+
+The existing `BOOKINGS` table did not have a passenger-count column, so the required schema change is isolated in:
+
+```sql
+@database/04_module7_booking_passenger_count.sql
+```
+
+Run this migration once on an existing Module 1–6 Oracle schema. New database setups should use the updated `01_create_tables.sql`. The migration also increases `TICKETS.QR_CODE` to hold the complete ticket payload.
+
+The `ROUTES` table still supplies source and destination details; those values are copied into the QR payload and history response through the route relationship. No duplicate source or destination columns were added to `BOOKINGS`.
+
+ZXing dependencies used by the QR generator are stored in `lib/core-3.5.3.jar` and `lib/javase-3.5.3.jar`. They must be available to the Java compiler and Tomcat web application along with `ojdbc11.jar`.
+
 `DatabaseOperationsTest` is a small executable test for finding a sample user and admin, loading routes, and searching for a route. It uses the sample data from the database scripts and does not implement login, booking workflow, QR generation, or frontend integration.

@@ -2,6 +2,7 @@ package com.busticket;
 
 import com.busticket.model.Admin;
 import com.busticket.model.Booking;
+import com.busticket.model.BookingHistory;
 import com.busticket.model.Invoice;
 import com.busticket.model.Route;
 import com.busticket.model.Ticket;
@@ -120,11 +121,85 @@ public class DatabaseOperations {
         }
     }
 
+    /** Add a route and return it with the generated route ID. */
+    public Route addRoute(Route route) throws SQLException {
+        String sql = "INSERT INTO routes " +
+                "(route_number, source_location, destination, departure_time, " +
+                "arrival_time, fare, route_status) VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql, new String[]{"ROUTE_ID"})) {
+            statement.setString(1, route.getRouteNumber());
+            statement.setString(2, route.getSourceLocation());
+            statement.setString(3, route.getDestination());
+            statement.setTimestamp(4, route.getDepartureTime());
+            statement.setTimestamp(5, route.getArrivalTime());
+            statement.setBigDecimal(6, route.getFare());
+            statement.setString(7, defaultValue(route.getRouteStatus(), "ACTIVE"));
+            statement.executeUpdate();
+            route.setRouteId(getGeneratedId(statement));
+            return getRouteById(route.getRouteId());
+        } catch (SQLException exception) {
+            throw new SQLException("Could not add the route.", exception);
+        }
+    }
+
+    /** Update an existing route using its primary key. */
+    public boolean updateRoute(Route route) throws SQLException {
+        String sql = "UPDATE routes SET route_number = ?, source_location = ?, " +
+                "destination = ?, departure_time = ?, arrival_time = ?, fare = ?, " +
+                "route_status = ? WHERE route_id = ?";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, route.getRouteNumber());
+            statement.setString(2, route.getSourceLocation());
+            statement.setString(3, route.getDestination());
+            statement.setTimestamp(4, route.getDepartureTime());
+            statement.setTimestamp(5, route.getArrivalTime());
+            statement.setBigDecimal(6, route.getFare());
+            statement.setString(7, defaultValue(route.getRouteStatus(), "ACTIVE"));
+            statement.setLong(8, route.getRouteId());
+            return statement.executeUpdate() == 1;
+        } catch (SQLException exception) {
+            throw new SQLException("Could not update the route.", exception);
+        }
+    }
+
+    /** Delete a route by ID. Foreign-key errors are returned to the caller. */
+    public boolean deleteRoute(long routeId) throws SQLException {
+        String sql = "DELETE FROM routes WHERE route_id = ?";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, routeId);
+            return statement.executeUpdate() == 1;
+        } catch (SQLException exception) {
+            throw new SQLException("Could not delete the route. It may have related bookings.", exception);
+        }
+    }
+
+    /** Find one route by its generated ID. */
+    public Route getRouteById(long routeId) throws SQLException {
+        String sql = "SELECT route_id, route_number, source_location, destination, " +
+                "departure_time, arrival_time, fare, route_status FROM routes WHERE route_id = ?";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, routeId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next() ? mapRoute(resultSet) : null;
+            }
+        } catch (SQLException exception) {
+            throw new SQLException("Could not find the route.", exception);
+        }
+    }
+
     /** Add a booking and return it with the generated booking ID. */
     public Booking addBooking(Booking booking) throws SQLException {
         String sql = "INSERT INTO bookings " +
-                "(user_id, route_id, travel_date, seat_number, total_fare, booking_status) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+                "(user_id, route_id, travel_date, seat_number, passenger_count, total_fare, booking_status) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql, new String[]{"BOOKING_ID"})) {
@@ -132,8 +207,9 @@ public class DatabaseOperations {
             statement.setLong(2, booking.getRouteId());
             statement.setTimestamp(3, booking.getTravelDate());
             statement.setString(4, booking.getSeatNumber());
-            statement.setBigDecimal(5, booking.getTotalFare());
-            statement.setString(6, defaultValue(booking.getBookingStatus(), "CONFIRMED"));
+            statement.setInt(5, booking.getPassengerCount());
+            statement.setBigDecimal(6, booking.getTotalFare());
+            statement.setString(7, defaultValue(booking.getBookingStatus(), "CONFIRMED"));
             statement.executeUpdate();
             booking.setBookingId(getGeneratedId(statement));
             return getBookingById(booking.getBookingId());
@@ -145,7 +221,8 @@ public class DatabaseOperations {
     /** Find one booking by its primary key. */
     public Booking getBookingById(long bookingId) throws SQLException {
         String sql = "SELECT booking_id, user_id, route_id, booking_date, travel_date, " +
-                "seat_number, total_fare, booking_status FROM bookings WHERE booking_id = ?";
+                "seat_number, passenger_count, total_fare, booking_status " +
+                "FROM bookings WHERE booking_id = ?";
 
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -155,6 +232,49 @@ public class DatabaseOperations {
             }
         } catch (SQLException exception) {
             throw new SQLException("Could not find the booking.", exception);
+        }
+    }
+
+    /** Load a user's bookings together with the related route information. */
+    public List<BookingHistory> getBookingHistoryByUserId(long userId) throws SQLException {
+        String sql = "SELECT b.booking_id, b.user_id, b.route_id, r.route_number, " +
+                "r.source_location, r.destination, b.booking_date, b.travel_date, " +
+                "b.passenger_count, b.total_fare, b.booking_status " +
+                "FROM bookings b JOIN routes r ON r.route_id = b.route_id " +
+                "WHERE b.user_id = ? ORDER BY b.booking_date DESC";
+        List<BookingHistory> history = new ArrayList<>();
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, userId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    history.add(mapBookingHistory(resultSet));
+                }
+            }
+            return history;
+        } catch (SQLException exception) {
+            throw new SQLException("Could not load travel history.", exception);
+        }
+    }
+
+    /** Load one booking only when it belongs to the logged-in user. */
+    public BookingHistory getBookingHistoryById(long userId, long bookingId) throws SQLException {
+        String sql = "SELECT b.booking_id, b.user_id, b.route_id, r.route_number, " +
+                "r.source_location, r.destination, b.booking_date, b.travel_date, " +
+                "b.passenger_count, b.total_fare, b.booking_status " +
+                "FROM bookings b JOIN routes r ON r.route_id = b.route_id " +
+                "WHERE b.user_id = ? AND b.booking_id = ?";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, userId);
+            statement.setLong(2, bookingId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next() ? mapBookingHistory(resultSet) : null;
+            }
+        } catch (SQLException exception) {
+            throw new SQLException("Could not load the booking details.", exception);
         }
     }
 
@@ -230,6 +350,70 @@ public class DatabaseOperations {
         }
     }
 
+    /**
+     * Create the booking, ticket, and invoice together so a failed ticket or
+     * invoice insert rolls back the booking as well.
+     */
+    public void createCompleteBooking(Booking booking, Ticket ticket, Invoice invoice)
+            throws SQLException {
+        String bookingSql = "INSERT INTO bookings " +
+                "(user_id, route_id, travel_date, seat_number, passenger_count, total_fare, booking_status) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String ticketSql = "INSERT INTO tickets " +
+                "(booking_id, ticket_number, qr_code, ticket_status) VALUES (?, ?, ?, ?)";
+        String invoiceSql = "INSERT INTO invoices " +
+                "(booking_id, invoice_number, amount, payment_method, payment_status) " +
+                "VALUES (?, ?, ?, ?, ?)";
+
+        try (Connection connection = DBConnection.getConnection()) {
+            connection.setAutoCommit(false);
+            try (PreparedStatement bookingStatement = connection.prepareStatement(
+                    bookingSql, new String[]{"BOOKING_ID"});
+                 PreparedStatement ticketStatement = connection.prepareStatement(
+                         ticketSql, new String[]{"TICKET_ID"});
+                 PreparedStatement invoiceStatement = connection.prepareStatement(
+                         invoiceSql, new String[]{"INVOICE_ID"})) {
+
+                bookingStatement.setLong(1, booking.getUserId());
+                bookingStatement.setLong(2, booking.getRouteId());
+                bookingStatement.setTimestamp(3, booking.getTravelDate());
+                bookingStatement.setString(4, booking.getSeatNumber());
+                bookingStatement.setInt(5, booking.getPassengerCount());
+                bookingStatement.setBigDecimal(6, booking.getTotalFare());
+                bookingStatement.setString(7, defaultValue(booking.getBookingStatus(), "CONFIRMED"));
+                bookingStatement.executeUpdate();
+                booking.setBookingId(getGeneratedId(bookingStatement));
+
+                ticketStatement.setLong(1, booking.getBookingId());
+                ticketStatement.setString(2, ticket.getTicketNumber());
+                String qrCode = ticket.getQrCode().replace("{BOOKING_ID}",
+                        String.valueOf(booking.getBookingId()));
+                ticketStatement.setString(3, qrCode);
+                ticketStatement.setString(4, defaultValue(ticket.getTicketStatus(), "VALID"));
+                ticketStatement.executeUpdate();
+                ticket.setBookingId(booking.getBookingId());
+                ticket.setQrCode(qrCode);
+                ticket.setTicketId(getGeneratedId(ticketStatement));
+
+                invoiceStatement.setLong(1, booking.getBookingId());
+                invoiceStatement.setString(2, invoice.getInvoiceNumber());
+                invoiceStatement.setBigDecimal(3, invoice.getAmount());
+                invoiceStatement.setString(4, invoice.getPaymentMethod());
+                invoiceStatement.setString(5, defaultValue(invoice.getPaymentStatus(), "PAID"));
+                invoiceStatement.executeUpdate();
+                invoice.setBookingId(booking.getBookingId());
+                invoice.setInvoiceId(getGeneratedId(invoiceStatement));
+
+                connection.commit();
+            } catch (SQLException exception) {
+                connection.rollback();
+                throw exception;
+            }
+        } catch (SQLException exception) {
+            throw new SQLException("Could not create the booking, ticket, and invoice.", exception);
+        }
+    }
+
     private long getGeneratedId(PreparedStatement statement) throws SQLException {
         try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
             if (generatedKeys.next()) {
@@ -282,6 +466,22 @@ public class DatabaseOperations {
                 resultSet.getTimestamp("booking_date"),
                 resultSet.getTimestamp("travel_date"),
                 resultSet.getString("seat_number"),
+                resultSet.getInt("passenger_count"),
+                resultSet.getBigDecimal("total_fare"),
+                resultSet.getString("booking_status"));
+    }
+
+    private BookingHistory mapBookingHistory(ResultSet resultSet) throws SQLException {
+        return new BookingHistory(
+                resultSet.getLong("booking_id"),
+                resultSet.getLong("user_id"),
+                resultSet.getLong("route_id"),
+                resultSet.getString("route_number"),
+                resultSet.getString("source_location"),
+                resultSet.getString("destination"),
+                resultSet.getTimestamp("booking_date"),
+                resultSet.getTimestamp("travel_date"),
+                resultSet.getInt("passenger_count"),
                 resultSet.getBigDecimal("total_fare"),
                 resultSet.getString("booking_status"));
     }

@@ -12,6 +12,7 @@ public class Booking {
     private Timestamp bookingDate;
     private Timestamp travelDate;
     private String seatNumber;
+    private int passengerCount;
     private BigDecimal totalFare;
     private String bookingStatus;
 
@@ -21,12 +22,20 @@ public class Booking {
     public Booking(long bookingId, long userId, long routeId, Timestamp bookingDate,
                    Timestamp travelDate, String seatNumber, BigDecimal totalFare,
                    String bookingStatus) {
+        this(bookingId, userId, routeId, bookingDate, travelDate, seatNumber, 1,
+                totalFare, bookingStatus);
+    }
+
+    public Booking(long bookingId, long userId, long routeId, Timestamp bookingDate,
+                   Timestamp travelDate, String seatNumber, int passengerCount,
+                   BigDecimal totalFare, String bookingStatus) {
         this.bookingId = bookingId;
         this.userId = userId;
         this.routeId = routeId;
         this.bookingDate = bookingDate;
         this.travelDate = travelDate;
         this.seatNumber = seatNumber;
+        this.passengerCount = passengerCount;
         this.totalFare = totalFare;
         this.bookingStatus = bookingStatus;
     }
@@ -43,6 +52,8 @@ public class Booking {
     public void setTravelDate(Timestamp travelDate) { this.travelDate = travelDate; }
     public String getSeatNumber() { return seatNumber; }
     public void setSeatNumber(String seatNumber) { this.seatNumber = seatNumber; }
+    public int getPassengerCount() { return passengerCount; }
+    public void setPassengerCount(int passengerCount) { this.passengerCount = passengerCount; }
     public BigDecimal getTotalFare() { return totalFare; }
     public void setTotalFare(BigDecimal totalFare) { this.totalFare = totalFare; }
     public String getBookingStatus() { return bookingStatus; }
@@ -56,6 +67,7 @@ public class Booking {
                 ", routeId=" + routeId +
                 ", travelDate=" + travelDate +
                 ", seatNumber='" + seatNumber + '\'' +
+                ", passengerCount=" + passengerCount +
                 ", totalFare=" + totalFare +
                 ", bookingStatus='" + bookingStatus + '\'' +
                 '}';

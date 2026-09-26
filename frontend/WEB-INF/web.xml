@@ -41,6 +41,35 @@
         <url-pattern>/logout</url-pattern>
     </servlet-mapping>
 
+    <servlet>
+        <servlet-name>RouteSearchServlet</servlet-name>
+        <servlet-class>com.busticket.web.RouteSearchServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>RouteSearchServlet</servlet-name>
+        <url-pattern>/route-search</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>RouteManagementServlet</servlet-name>
+        <servlet-class>com.busticket.web.RouteManagementServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>RouteManagementServlet</servlet-name>
+        <url-pattern>/route-management</url-pattern>
+    </servlet-mapping>
+
+    <servlet><servlet-name>BookingServlet</servlet-name><servlet-class>com.busticket.web.BookingServlet</servlet-class></servlet>
+    <servlet-mapping><servlet-name>BookingServlet</servlet-name><url-pattern>/booking</url-pattern></servlet-mapping>
+    <servlet><servlet-name>TravelHistoryServlet</servlet-name><servlet-class>com.busticket.web.TravelHistoryServlet</servlet-class></servlet>
+    <servlet-mapping><servlet-name>TravelHistoryServlet</servlet-name><url-pattern>/travel-history</url-pattern></servlet-mapping>
+    <servlet><servlet-name>TicketServlet</servlet-name><servlet-class>com.busticket.web.TicketServlet</servlet-class></servlet>
+    <servlet-mapping><servlet-name>TicketServlet</servlet-name><url-pattern>/ticket</url-pattern></servlet-mapping>
+    <servlet><servlet-name>InvoiceServlet</servlet-name><servlet-class>com.busticket.web.InvoiceServlet</servlet-class></servlet>
+    <servlet-mapping><servlet-name>InvoiceServlet</servlet-name><url-pattern>/invoice</url-pattern></servlet-mapping>
+    <servlet><servlet-name>QrCodeServlet</servlet-name><servlet-class>com.busticket.web.QrCodeServlet</servlet-class></servlet>
+    <servlet-mapping><servlet-name>QrCodeServlet</servlet-name><url-pattern>/ticket-qr</url-pattern></servlet-mapping>
+
     <filter>
         <filter-name>AuthFilter</filter-name>
         <filter-class>com.busticket.web.AuthFilter</filter-class>
@@ -53,6 +82,13 @@
     <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/travel-history.html</url-pattern></filter-mapping>
     <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/admin-dashboard.html</url-pattern></filter-mapping>
     <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/route-management.html</url-pattern></filter-mapping>
+    <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/route-search</url-pattern></filter-mapping>
+    <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/route-management</url-pattern></filter-mapping>
+    <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/booking</url-pattern></filter-mapping>
+    <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/travel-history</url-pattern></filter-mapping>
+    <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/ticket</url-pattern></filter-mapping>
+    <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/invoice</url-pattern></filter-mapping>
+    <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/ticket-qr</url-pattern></filter-mapping>
 
     <welcome-file-list><welcome-file>index.html</welcome-file></welcome-file-list>
 </web-app>

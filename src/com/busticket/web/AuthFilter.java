@@ -22,7 +22,9 @@ public class AuthFilter implements Filter {
         HttpSession session = httpRequest.getSession(false);
 
         String path = httpRequest.getRequestURI().substring(httpRequest.getContextPath().length());
-        boolean adminPage = path.startsWith("/admin-") || path.equals("/route-management.html");
+        boolean adminPage = path.startsWith("/admin-")
+                || path.equals("/route-management.html")
+                || path.equals("/route-management");
         boolean loggedIn = session != null && (adminPage
                 ? session.getAttribute("adminId") != null
                 : session.getAttribute("userId") != null);

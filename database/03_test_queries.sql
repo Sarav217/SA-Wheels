@@ -17,12 +17,14 @@ WHERE UPPER(source_location) = UPPER('Chennai Central')
   AND UPPER(destination) = UPPER('Tambaram');
 
 -- 4. View all bookings.
-SELECT booking_id, user_id, route_id, booking_date, travel_date, seat_number, total_fare, booking_status
+SELECT booking_id, user_id, route_id, booking_date, travel_date, seat_number,
+       passenger_count, total_fare, booking_status
 FROM bookings ORDER BY booking_id;
 
 -- 5. Join bookings with the related user and route.
 SELECT b.booking_id, u.full_name, u.email, r.route_number, r.source_location,
-       r.destination, b.travel_date, b.seat_number, b.total_fare, b.booking_status
+       r.destination, b.travel_date, b.seat_number, b.passenger_count,
+       b.total_fare, b.booking_status
 FROM bookings b
 JOIN users u ON u.user_id = b.user_id
 JOIN routes r ON r.route_id = b.route_id
@@ -47,4 +49,3 @@ JOIN bookings b ON b.booking_id = i.booking_id
 JOIN users u ON u.user_id = b.user_id
 JOIN routes r ON r.route_id = b.route_id
 ORDER BY i.invoice_id;
-
