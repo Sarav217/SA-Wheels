@@ -27,6 +27,7 @@ function showUrlMessage() {
         'invalid-credentials': ['Invalid email or password.', 'danger'],
         'database-error': ['The request could not be completed. Please check the server and try again.', 'danger'],
         'login-required': ['Please log in to access that page.', 'warning'],
+        'login-to-book': ['Please log in to book your ticket.', 'warning'],
         'route-unavailable': ['The selected route is unavailable. Please choose another route.', 'danger'],
         'invalid-booking': ['Please check the travel date (today or later), payment method, and passenger count (1 to 6).', 'danger'],
         'booking-failed': ['The booking could not be completed. Please try again.', 'danger'],
@@ -49,6 +50,7 @@ function setupSessionInfo() {
     fetch('session-info')
         .then((response) => response.ok ? response.json() : Promise.reject(new Error('No session info.')))
         .then((session) => {
+            window.currentSession = session;
             document.querySelectorAll('[data-user-name]').forEach((element) => {
                 if (session.userName) element.textContent = session.userName;
             });
@@ -191,16 +193,122 @@ function setupPrintButtons() {
     });
 }
 
-// The home page form opens route-search.html with the entered values.
+// The landing page searches the public route list (including imported MTC
+// bus numbers such as 52H). Booking still requires a passenger login.
 function setupHomeSearch() {
     const form = document.querySelector('#searchForm');
-    if (!form) return;
-    const dateInput = form.querySelector('[name="date"]');
-    if (dateInput) {
-        dateInput.min = getLocalDateString();
-        if (!dateInput.value) dateInput.value = getLocalDateString();
-    }
+    const results = document.querySelector('#homeRouteResults');
+    if (!form || !results) return;
+
+    const dateInput = document.querySelector('#travelDate');
+    const localToday = getLocalDateString();
+    dateInput.min = localToday;
+    if (!dateInput.value) dateInput.value = localToday;
     setupSwapButton('#homeSwap', '#source', '#destination');
+
+    const sourceSelect = document.querySelector('#source');
+    const destinationSelect = document.querySelector('#destination');
+    const busNumberInput = document.querySelector('#busNumber');
+    let allRoutes = [];
+
+    fetch('public-route-search')
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error('Routes unavailable.')))
+        .then((routes) => {
+            allRoutes = routes;
+            addSelectOptions(sourceSelect, [...new Set(routes.map((route) => route.source))].sort(), 'Choose source');
+            addSelectOptions(destinationSelect, [...new Set(routes.map((route) => route.destination))].sort(), 'Choose destination');
+            const busList = document.querySelector('#busNumberList');
+            if (busList) {
+                busList.replaceChildren();
+                [...new Set(routes.map((route) => route.routeNumber))].sort().forEach((number) => {
+                    const option = document.createElement('option');
+                    option.value = number;
+                    busList.appendChild(option);
+                });
+            }
+        })
+        .catch(() => {
+            showHomeSearchMessage('Routes could not be loaded. Deploy the application on Tomcat and check the Oracle connection.', true);
+        });
+
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const source = sourceSelect.value;
+        const destination = destinationSelect.value;
+        const busNumber = busNumberInput.value.trim().toLowerCase();
+
+        if (!busNumber && (!source || !destination)) {
+            showHomeSearchMessage('Choose both From and To, or enter a bus number such as 52H.', true);
+            return;
+        }
+        if (source && destination && source === destination) {
+            showHomeSearchMessage('From and To must be different.', true);
+            return;
+        }
+        if (!dateInput.value || dateInput.value < localToday) {
+            showHomeSearchMessage('Choose today or a later travel date.', true);
+            return;
+        }
+
+        const matches = allRoutes.filter((route) => {
+            const numberMatches = !busNumber || String(route.routeNumber).toLowerCase() === busNumber;
+            const sourceMatches = !source || route.source === source;
+            const destinationMatches = !destination || route.destination === destination;
+            return numberMatches && sourceMatches && destinationMatches;
+        });
+
+        renderHomeResults(results, matches, dateInput.value);
+        const title = busNumber
+            ? `Bus ${busNumberInput.value.trim().toUpperCase()}${source && destination ? ` · ${source} to ${destination}` : ''}`
+            : `${source} to ${destination}`;
+        setText('homeResultTitle', title);
+        setText('homeResultCount', `${matches.length} bus${matches.length === 1 ? '' : 'es'}`);
+        document.querySelector('#homeResultsSection')?.classList.remove('d-none');
+        showHomeSearchMessage(matches.length === 0 ? 'No buses found for this search. Try another bus number or places.' : '');
+        document.querySelector('#homeResultsSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+}
+
+function renderHomeResults(container, routes, travelDate) {
+    container.replaceChildren();
+    if (routes.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="8" class="text-center text-muted">No buses found.</td>';
+        container.appendChild(row);
+        return;
+    }
+    routes.forEach((route) => {
+        const row = document.createElement('tr');
+        addNodeCell(row, routeBadge(route.routeNumber));
+        addCell(row, route.source);
+        addCell(row, route.destination);
+        addCell(row, route.departure);
+        addCell(row, route.arrival);
+        addCell(row, formatDuration(route.travelTimeMinutes));
+        addCell(row, formatMoney(route.fare));
+        const actionCell = document.createElement('td');
+        const link = document.createElement('a');
+        link.className = 'btn btn-sm btn-primary';
+        link.innerHTML = '<i class="bi bi-ticket-perforated me-1"></i>Book Ticket';
+        link.href = 'login.html?error=login-to-book';
+        // Logged-in passengers go straight to booking; everyone else logs in first.
+        link.addEventListener('click', (event) => {
+            if (window.currentSession && window.currentSession.user) {
+                event.preventDefault();
+                window.location.href = `booking.html?routeId=${encodeURIComponent(route.routeId)}&travelDate=${encodeURIComponent(travelDate)}`;
+            }
+        });
+        actionCell.appendChild(link);
+        row.appendChild(actionCell);
+        container.appendChild(row);
+    });
+}
+
+function showHomeSearchMessage(message, isError = false) {
+    const element = document.querySelector('#homeSearchMessage');
+    if (!element) return;
+    element.textContent = message;
+    element.className = `alert mt-3 mb-0 ${isError ? 'alert-danger' : 'alert-info'}${message ? '' : ' d-none'}`;
 }
 
 function setupSwapButton(buttonSelector, firstSelector, secondSelector) {

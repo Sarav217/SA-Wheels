@@ -531,6 +531,7 @@ The frontend uses a blue theme with Bootstrap 5, Bootstrap Icons, and the Poppin
 | URL | Servlet | Purpose |
 | --- | --- | --- |
 | `/session-info` | `SessionInfoServlet` | Returns who is logged in (user or admin name) so pages show the correct name and navigation links. No passwords are returned. |
+| `/public-route-search` | `RouteSearchServlet` (second, public mapping) | Read-only list of active routes, including imported MTC bus numbers such as 52H, for the landing page search. Visitors can view routes without logging in; **Book Ticket** sends them to the login page. |
 | `/admin-summary` | `AdminSummaryServlet` | Returns live route, booking, passenger, and revenue totals, the latest 10 bookings, and the passenger list for the admin dashboard. Admin login is required. |
 
 ### Fixes

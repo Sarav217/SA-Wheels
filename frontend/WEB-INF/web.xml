@@ -49,6 +49,11 @@
         <servlet-name>RouteSearchServlet</servlet-name>
         <url-pattern>/route-search</url-pattern>
     </servlet-mapping>
+    <!-- Public, read-only route search used by the landing page (no login needed to view routes). -->
+    <servlet-mapping>
+        <servlet-name>RouteSearchServlet</servlet-name>
+        <url-pattern>/public-route-search</url-pattern>
+    </servlet-mapping>
 
     <servlet>
         <servlet-name>RouteManagementServlet</servlet-name>
