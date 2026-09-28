@@ -69,6 +69,10 @@
     <servlet-mapping><servlet-name>InvoiceServlet</servlet-name><url-pattern>/invoice</url-pattern></servlet-mapping>
     <servlet><servlet-name>QrCodeServlet</servlet-name><servlet-class>com.busticket.web.QrCodeServlet</servlet-class></servlet>
     <servlet-mapping><servlet-name>QrCodeServlet</servlet-name><url-pattern>/ticket-qr</url-pattern></servlet-mapping>
+    <servlet><servlet-name>SessionInfoServlet</servlet-name><servlet-class>com.busticket.web.SessionInfoServlet</servlet-class></servlet>
+    <servlet-mapping><servlet-name>SessionInfoServlet</servlet-name><url-pattern>/session-info</url-pattern></servlet-mapping>
+    <servlet><servlet-name>AdminSummaryServlet</servlet-name><servlet-class>com.busticket.web.AdminSummaryServlet</servlet-class></servlet>
+    <servlet-mapping><servlet-name>AdminSummaryServlet</servlet-name><url-pattern>/admin-summary</url-pattern></servlet-mapping>
 
     <filter>
         <filter-name>AuthFilter</filter-name>
@@ -89,6 +93,7 @@
     <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/ticket</url-pattern></filter-mapping>
     <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/invoice</url-pattern></filter-mapping>
     <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/ticket-qr</url-pattern></filter-mapping>
+    <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/admin-summary</url-pattern></filter-mapping>
 
     <welcome-file-list><welcome-file>index.html</welcome-file></welcome-file-list>
 </web-app>

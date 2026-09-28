@@ -72,7 +72,8 @@ public class RegisterServlet extends HttpServlet {
             user.setPassword(password);
             databaseOperations.addUser(user);
 
-            redirectWithMessage(request, response, "register.html", "success", "registered");
+            // Send the new user straight to the login form.
+            redirectWithMessage(request, response, "login.html", "success", "registered");
         } catch (SQLException exception) {
             // Keep database details out of the browser and show a simple user message.
             redirectWithMessage(request, response, "register.html", "error", "database-error");

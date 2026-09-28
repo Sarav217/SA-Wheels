@@ -46,6 +46,9 @@ public class InvoiceServlet extends HttpServlet {
                     "\"passengerCount\":" + booking.getPassengerCount() + "," +
                     "\"passengerName\":" + quote(String.valueOf(session.getAttribute("userName"))) + "," +
                     "\"route\":" + quote(booking.getRouteNumber()) + "," +
+                    "\"source\":" + quote(booking.getSource()) + "," +
+                    "\"destination\":" + quote(booking.getDestination()) + "," +
+                    "\"travelDate\":" + quote(String.valueOf(booking.getTravelDate())) + "," +
                     "\"amount\":" + invoice.getAmount() + "," +
                     "\"paymentMethod\":" + quote(invoice.getPaymentMethod()) + "," +
                     "\"paymentStatus\":" + quote(invoice.getPaymentStatus()) +
@@ -59,6 +62,6 @@ public class InvoiceServlet extends HttpServlet {
     }
 
     private String quote(String value) {
-        return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+        return RouteJson.quote(value);
     }
 }

@@ -14,6 +14,8 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -107,7 +109,11 @@ public class BookingServlet extends HttpServlet {
             if (value == null || value.isBlank()) {
                 throw new IllegalArgumentException("Travel date is required.");
             }
-            return LocalDate.parse(value);
+            LocalDate travelDate = LocalDate.parse(value);
+            if (travelDate.isBefore(LocalDate.now())) {
+                throw new IllegalArgumentException("Travel date cannot be in the past.");
+            }
+            return travelDate;
         } catch (DateTimeParseException exception) {
             throw new IllegalArgumentException("Travel date is invalid.");
         }
@@ -126,6 +132,16 @@ public class BookingServlet extends HttpServlet {
 
     private void redirectError(HttpServletRequest request, HttpServletResponse response,
                                String error) throws IOException {
-        response.sendRedirect(request.getContextPath() + "/booking.html?error=" + error);
+        // Keep the selected route and date so the user does not lose the booking form.
+        String routeId = request.getParameter("routeId");
+        String travelDate = request.getParameter("travelDate");
+        String url = request.getContextPath() + "/booking.html?error=" + error;
+        if (routeId != null && !routeId.isBlank()) {
+            url += "&routeId=" + URLEncoder.encode(routeId, StandardCharsets.UTF_8);
+        }
+        if (travelDate != null && !travelDate.isBlank()) {
+            url += "&travelDate=" + URLEncoder.encode(travelDate, StandardCharsets.UTF_8);
+        }
+        response.sendRedirect(url);
     }
 }

@@ -48,11 +48,11 @@ final class RouteJson {
                 route.getArrivalTime().toInstant()).toMinutes();
     }
 
-    private static String formatTime(java.sql.Timestamp timestamp) {
+    static String formatTime(java.sql.Timestamp timestamp) {
         return timestamp == null ? "" : timestamp.toLocalDateTime().format(TIME_FORMAT);
     }
 
-    private static String quote(String value) {
+    static String quote(String value) {
         if (value == null) {
             return "null";
         }

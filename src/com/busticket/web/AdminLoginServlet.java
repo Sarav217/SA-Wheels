@@ -50,6 +50,7 @@ public class AdminLoginServlet extends HttpServlet {
             session.setAttribute("adminId", admin.getAdminId());
             session.setAttribute("adminUserId", admin.getUserId());
             session.setAttribute("adminRole", admin.getAdminRole());
+            session.setAttribute("adminName", adminUser.getFullName());
             response.sendRedirect(request.getContextPath() + "/admin-dashboard.html");
         } catch (SQLException exception) {
             // Keep database details out of the browser and show a simple message.

@@ -47,10 +47,12 @@ public class TravelHistoryServlet extends HttpServlet {
             json.append("{\"bookingId\":").append(item.getBookingId())
                     .append(",\"bookingDate\":").append(quote(String.valueOf(item.getBookingDate())))
                     .append(",\"travelDate\":").append(quote(String.valueOf(item.getTravelDate())))
+                    .append(",\"routeNumber\":").append(quote(item.getRouteNumber()))
                     .append(",\"source\":").append(quote(item.getSource()))
                     .append(",\"destination\":").append(quote(item.getDestination()))
                     .append(",\"passengerCount\":").append(item.getPassengerCount())
                     .append(",\"totalFare\":").append(item.getTotalFare())
+                    .append(",\"departure\":").append(quote(RouteJson.formatTime(item.getDepartureTime())))
                     .append(",\"status\":").append(quote(item.getBookingStatus()))
                     .append('}');
         }
@@ -58,6 +60,6 @@ public class TravelHistoryServlet extends HttpServlet {
     }
 
     private String quote(String value) {
-        return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+        return RouteJson.quote(value);
     }
 }

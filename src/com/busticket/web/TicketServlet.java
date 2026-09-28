@@ -50,7 +50,11 @@ public class TicketServlet extends HttpServlet {
                     "\"passengerCount\":" + booking.getPassengerCount() + "," +
                     "\"totalFare\":" + booking.getTotalFare() + "," +
                     "\"status\":" + quote(booking.getBookingStatus()) + "," +
-                    "\"ticketNumber\":" + quote(ticket.getTicketNumber()) +
+                    "\"ticketNumber\":" + quote(ticket.getTicketNumber()) + "," +
+                    "\"ticketStatus\":" + quote(ticket.getTicketStatus()) + "," +
+                    "\"passengerName\":" + quote((String) session.getAttribute("userName")) + "," +
+                    "\"departure\":" + quote(RouteJson.formatTime(booking.getDepartureTime())) + "," +
+                    "\"arrival\":" + quote(RouteJson.formatTime(booking.getArrivalTime())) +
                     "}");
         } catch (NumberFormatException exception) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Booking ID is invalid.");
@@ -61,6 +65,6 @@ public class TicketServlet extends HttpServlet {
     }
 
     private String quote(String value) {
-        return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+        return RouteJson.quote(value);
     }
 }

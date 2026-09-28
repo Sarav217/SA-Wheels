@@ -521,3 +521,29 @@ The source page listed 693 route options. The route-wise endpoint returned usabl
 Important data limitation: the MTC route-wise response provides route, origin, destination, and stage information, but not a route-specific fare and departure/arrival pair in the same response. Imported MTC records use `00:00` departure and `01:00` arrival as schedule placeholders. Development fares were assigned randomly in the `10.00`–`80.00` range so that fare calculation and booking can be tested; these are not official MTC fares and must be replaced with verified fare data before real ticket sales. Seventeen source options were excluded because the endpoint returned no usable route details or the values violated the project table constraints, such as identical source and destination.
 
 The route search frontend now loads its source and destination dropdowns from the database through `RouteSearchServlet`; it is no longer limited to the original sample options. The official MTC page identifies its timing schedule as the latest schedule and displays its update date; route-wise data should be refreshed when MTC publishes changes. The project’s `ROUTES` table keeps the simple college-project schema and does not store all individual intermediate stages from the MTC site.
+
+## Module 11: UI Redesign and Page Fixes
+
+The frontend uses a blue theme with Bootstrap 5, Bootstrap Icons, and the Poppins font. Every page has the same collapsible navigation bar, so the layout works on phones, tablets, and desktops. On small screens, data tables are shown as labelled cards.
+
+### New Servlets
+
+| URL | Servlet | Purpose |
+| --- | --- | --- |
+| `/session-info` | `SessionInfoServlet` | Returns who is logged in (user or admin name) so pages show the correct name and navigation links. No passwords are returned. |
+| `/admin-summary` | `AdminSummaryServlet` | Returns live route, booking, passenger, and revenue totals, the latest 10 bookings, and the passenger list for the admin dashboard. Admin login is required. |
+
+### Fixes
+
+- The user dashboard shows the logged-in user's name, trip totals, recent trips, and the next upcoming trip instead of sample text.
+- The admin dashboard shows live database totals instead of fixed numbers. Its old links to user-only pages were removed.
+- The home page search opens `route-search.html` with the entered places and date; matching routes are searched automatically after login.
+- The booking page no longer books route 1 silently when no route is chosen, and a failed booking keeps the selected route and date.
+- `BookingServlet` rejects travel dates in the past.
+- Registration success redirects to the login page.
+- Tickets show the passenger name, departure and arrival times; invoices show the journey and travel date.
+- Travel history links to both the ticket and the invoice of each booking.
+- Admins can set a route to `INACTIVE` (useful when a route has bookings and cannot be deleted), filter the route list, and confirm deletes in a popup.
+- The route table no longer shows the unused "Stops" column.
+
+After pulling these changes, recompile the Java sources and copy `frontend/` to Tomcat again, as described in Module 9. The CSS and JavaScript links include a version number (`?v=4`) so browsers load the new files.

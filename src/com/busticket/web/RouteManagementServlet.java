@@ -95,6 +95,13 @@ public class RouteManagementServlet extends HttpServlet {
         String departure = value(request.getParameter("departure"));
         String arrival = value(request.getParameter("arrival"));
         String fareText = value(request.getParameter("fare"));
+        String status = value(request.getParameter("status")).toUpperCase();
+        if (status.isBlank()) {
+            status = "ACTIVE";
+        }
+        if (!status.equals("ACTIVE") && !status.equals("INACTIVE")) {
+            throw new IllegalArgumentException("Status must be ACTIVE or INACTIVE.");
+        }
 
         if (routeNumber.isBlank() || source.isBlank() || destination.isBlank()
                 || departure.isBlank() || arrival.isBlank() || fareText.isBlank()) {
@@ -121,7 +128,7 @@ public class RouteManagementServlet extends HttpServlet {
         }
 
         return new Route(routeId, routeNumber, source, destination, departureTime,
-                arrivalTime, fare, "ACTIVE");
+                arrivalTime, fare, status);
     }
 
     private Timestamp timeAsTimestamp(String time) {

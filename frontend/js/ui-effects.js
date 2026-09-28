@@ -18,7 +18,6 @@
         setupLogoutPopup();
         setupFareBump();
         setupTicketCelebration();
-        setupCountUp();
         showWelcomeToast();
     });
 
@@ -206,9 +205,23 @@
         }).observe(main, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
     }
 
+    // Copies each column heading onto its cells so .table-stack tables can
+    // show as labelled cards on small screens.
+    function labelCells(body) {
+        const headings = [...(body.closest('table')?.querySelectorAll('thead th') || [])]
+            .map((th) => th.textContent.trim());
+        [...body.children].forEach((row) => {
+            [...row.children].forEach((cell, index) => {
+                if (!cell.hasAttribute('colspan') && headings[index]) cell.dataset.label = headings[index];
+            });
+        });
+    }
+
     function animateTableRows() {
         document.querySelectorAll('tbody').forEach((body) => {
+            labelCells(body);
             new MutationObserver(() => {
+                labelCells(body);
                 [...body.children].forEach((row, index) => {
                     if (row.dataset.animated) return;
                     row.dataset.animated = '1';
@@ -269,9 +282,10 @@
                 ['Route', value('selectedRouteNumber')],
                 ['From', value('selectedSource')],
                 ['To', value('selectedDestination')],
+                ['Departure', value('selectedDeparture')],
                 ['Travel date', document.getElementById('travelDate')?.value || '-'],
                 ['Passengers', document.getElementById('passengerCount')?.value || '-'],
-                ['Payment', document.getElementById('paymentMethod')?.selectedOptions[0]?.textContent || '-'],
+                ['Payment', form.querySelector('[name="paymentMethod"]:checked')?.dataset.label || '-'],
                 ['Total', value('totalFare')]
             ];
             const summary = modalElement.querySelector('#bookingSummary');
@@ -373,24 +387,58 @@
         }
     }
 
-    function setupCountUp() {
-        document.querySelectorAll('.stat-card .display-6').forEach((element) => {
-            const original = element.textContent.trim();
-            const number = Number(original.replace(/[^0-9.]/g, ''));
-            if (!number || reduceMotion) return;
-            const prefix = original.match(/^[^0-9]*/)[0];
-            const start = performance.now();
-            const duration = 1400;
-            const step = (now) => {
-                const progress = Math.min((now - start) / duration, 1);
-                const eased = 1 - Math.pow(1 - progress, 3);
-                element.textContent = `${prefix}${Math.round(number * eased).toLocaleString('en-IN')}`;
-                if (progress < 1) requestAnimationFrame(step);
-                else element.textContent = original;
+    // Animates a number from 0 to the target; used by the live dashboards.
+    function countUp(element, target, format) {
+        if (reduceMotion || !target) {
+            element.textContent = format(target);
+            return;
+        }
+        const start = performance.now();
+        const duration = 1200;
+        const step = (now) => {
+            const progress = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            element.textContent = format(progress < 1 ? Math.round(target * eased) : target);
+            if (progress < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+    }
+    window.countUp = countUp;
+
+    // Promise-based replacement for window.confirm that uses the blue modal.
+    let confirmModal;
+    function confirmPopup(message, confirmText = 'Confirm') {
+        if (!window.bootstrap) return Promise.resolve(window.confirm(message));
+        if (!confirmModal) {
+            const element = createModal({
+                id: 'confirmModal',
+                icon: 'bi-exclamation-triangle',
+                title: 'Please confirm',
+                bodyHtml: '<p class="mb-0 text-muted confirm-message"></p>',
+                confirmText: 'Confirm',
+                confirmClass: 'btn-danger'
+            });
+            confirmModal = { element, modal: new bootstrap.Modal(element) };
+        }
+        const { element, modal } = confirmModal;
+        element.querySelector('.confirm-message').textContent = message;
+        const button = element.querySelector('.modal-confirm');
+        button.textContent = confirmText;
+        return new Promise((resolve) => {
+            let answer = false;
+            const onConfirm = () => {
+                answer = true;
+                modal.hide();
             };
-            requestAnimationFrame(step);
+            button.addEventListener('click', onConfirm, { once: true });
+            element.addEventListener('hidden.bs.modal', () => {
+                button.removeEventListener('click', onConfirm);
+                resolve(answer);
+            }, { once: true });
+            modal.show();
         });
     }
+    window.confirmPopup = confirmPopup;
 
     function showWelcomeToast() {
         const message = document.body.dataset.welcome;

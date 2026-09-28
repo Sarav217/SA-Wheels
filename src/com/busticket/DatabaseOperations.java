@@ -3,6 +3,7 @@ package com.busticket;
 import com.busticket.model.Admin;
 import com.busticket.model.Booking;
 import com.busticket.model.BookingHistory;
+import com.busticket.model.DashboardSummary;
 import com.busticket.model.Invoice;
 import com.busticket.model.Route;
 import com.busticket.model.Ticket;
@@ -239,7 +240,8 @@ public class DatabaseOperations {
     public List<BookingHistory> getBookingHistoryByUserId(long userId) throws SQLException {
         String sql = "SELECT b.booking_id, b.user_id, b.route_id, r.route_number, " +
                 "r.source_location, r.destination, b.booking_date, b.travel_date, " +
-                "b.passenger_count, b.total_fare, b.booking_status " +
+                "b.passenger_count, b.total_fare, b.booking_status, " +
+                "r.departure_time, r.arrival_time " +
                 "FROM bookings b JOIN routes r ON r.route_id = b.route_id " +
                 "WHERE b.user_id = ? ORDER BY b.booking_date DESC";
         List<BookingHistory> history = new ArrayList<>();
@@ -262,7 +264,8 @@ public class DatabaseOperations {
     public BookingHistory getBookingHistoryById(long userId, long bookingId) throws SQLException {
         String sql = "SELECT b.booking_id, b.user_id, b.route_id, r.route_number, " +
                 "r.source_location, r.destination, b.booking_date, b.travel_date, " +
-                "b.passenger_count, b.total_fare, b.booking_status " +
+                "b.passenger_count, b.total_fare, b.booking_status, " +
+                "r.departure_time, r.arrival_time " +
                 "FROM bookings b JOIN routes r ON r.route_id = b.route_id " +
                 "WHERE b.user_id = ? AND b.booking_id = ?";
 
@@ -414,6 +417,80 @@ public class DatabaseOperations {
         }
     }
 
+    /** Count routes, bookings, passengers, and paid revenue for the admin dashboard. */
+    public DashboardSummary getDashboardSummary() throws SQLException {
+        String sql = "SELECT " +
+                "(SELECT COUNT(*) FROM routes) AS total_routes, " +
+                "(SELECT COUNT(*) FROM routes WHERE route_status = 'ACTIVE') AS active_routes, " +
+                "(SELECT COUNT(*) FROM bookings) AS total_bookings, " +
+                "(SELECT COUNT(*) FROM users u WHERE NOT EXISTS " +
+                "(SELECT 1 FROM admin a WHERE a.user_id = u.user_id)) AS total_users, " +
+                "(SELECT NVL(SUM(amount), 0) FROM invoices WHERE payment_status = 'PAID') AS revenue " +
+                "FROM dual";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            resultSet.next();
+            return new DashboardSummary(
+                    resultSet.getLong("total_routes"),
+                    resultSet.getLong("active_routes"),
+                    resultSet.getLong("total_bookings"),
+                    resultSet.getLong("total_users"),
+                    resultSet.getBigDecimal("revenue"));
+        } catch (SQLException exception) {
+            throw new SQLException("Could not load the dashboard summary.", exception);
+        }
+    }
+
+    /** Load the latest bookings from all users for the admin dashboard. */
+    public List<BookingHistory> getRecentBookings(int limit) throws SQLException {
+        String sql = "SELECT b.booking_id, b.user_id, b.route_id, r.route_number, " +
+                "r.source_location, r.destination, b.booking_date, b.travel_date, " +
+                "b.passenger_count, b.total_fare, b.booking_status, " +
+                "r.departure_time, r.arrival_time, u.full_name " +
+                "FROM bookings b JOIN routes r ON r.route_id = b.route_id " +
+                "JOIN users u ON u.user_id = b.user_id " +
+                "ORDER BY b.booking_date DESC, b.booking_id DESC " +
+                "FETCH FIRST ? ROWS ONLY";
+        List<BookingHistory> bookings = new ArrayList<>();
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, limit);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    BookingHistory booking = mapBookingHistory(resultSet);
+                    booking.setUserName(resultSet.getString("full_name"));
+                    bookings.add(booking);
+                }
+            }
+            return bookings;
+        } catch (SQLException exception) {
+            throw new SQLException("Could not load recent bookings.", exception);
+        }
+    }
+
+    /** Load passenger accounts (admin accounts are left out) for the admin dashboard. */
+    public List<User> getPassengerUsers() throws SQLException {
+        String sql = "SELECT user_id, full_name, email, password, phone_number, " +
+                "created_at, user_status FROM users u WHERE NOT EXISTS " +
+                "(SELECT 1 FROM admin a WHERE a.user_id = u.user_id) " +
+                "ORDER BY created_at DESC, user_id DESC";
+        List<User> users = new ArrayList<>();
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            while (resultSet.next()) {
+                users.add(mapUser(resultSet));
+            }
+            return users;
+        } catch (SQLException exception) {
+            throw new SQLException("Could not load users.", exception);
+        }
+    }
+
     private long getGeneratedId(PreparedStatement statement) throws SQLException {
         try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
             if (generatedKeys.next()) {
@@ -483,7 +560,9 @@ public class DatabaseOperations {
                 resultSet.getTimestamp("travel_date"),
                 resultSet.getInt("passenger_count"),
                 resultSet.getBigDecimal("total_fare"),
-                resultSet.getString("booking_status"));
+                resultSet.getString("booking_status"),
+                resultSet.getTimestamp("departure_time"),
+                resultSet.getTimestamp("arrival_time"));
     }
 
     private Ticket mapTicket(ResultSet resultSet) throws SQLException {
