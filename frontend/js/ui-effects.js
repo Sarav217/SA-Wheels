@@ -6,7 +6,6 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         addPageLoader();
-        addBrandIcons();
         addFloatingBackground();
         addBackToTop();
         setupRipples();
@@ -24,7 +23,7 @@
     function addPageLoader() {
         const loader = document.createElement('div');
         loader.className = 'page-loader no-print';
-        loader.innerHTML = '<i class="bi bi-bus-front loader-bus"></i><div class="loader-road"></div><div class="loader-text">Loading your journey</div>';
+        loader.innerHTML = '<img class="loader-logo" src="img/sa-logo.svg" alt="" width="72" height="72"><div class="loader-brand">SA Wheels</div><div class="loader-road"></div><div class="loader-text">Loading your journey</div>';
         document.body.appendChild(loader);
         const hide = () => {
             loader.classList.add('hidden');
@@ -34,15 +33,6 @@
         else window.addEventListener('load', () => setTimeout(hide, 250));
         // Never keep the page covered if an external resource is slow.
         setTimeout(hide, 2500);
-    }
-
-    function addBrandIcons() {
-        document.querySelectorAll('.navbar-brand').forEach((brand) => {
-            const icon = document.createElement('span');
-            icon.className = 'brand-icon';
-            icon.innerHTML = '<i class="bi bi-bus-front"></i>';
-            brand.prepend(icon);
-        });
     }
 
     function addFloatingBackground() {

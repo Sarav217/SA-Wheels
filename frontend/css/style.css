@@ -91,11 +91,17 @@ a {
     visibility: hidden;
 }
 
-.page-loader .loader-bus {
+.page-loader .loader-logo {
     animation: busBounce 0.8s ease-in-out infinite alternate;
+    border-radius: 18px;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35), 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.page-loader .loader-brand {
     color: #fff;
-    font-size: 3.2rem;
-    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
 }
 
 .page-loader .loader-road {
@@ -171,16 +177,24 @@ a {
     letter-spacing: 0.01em;
 }
 
-.navbar-brand .brand-icon {
-    align-items: center;
+.brand-logo {
     animation: busBounce 1.6s ease-in-out infinite alternate;
-    background: rgba(255, 255, 255, 0.18);
     border-radius: 10px;
-    display: inline-flex;
-    font-size: 1.05rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    flex-shrink: 0;
     height: 34px;
-    justify-content: center;
     width: 34px;
+}
+
+.brand-logo-sm {
+    border-radius: 6px;
+    flex-shrink: 0;
+    margin-right: 0.5rem;
+    vertical-align: -0.3em;
+}
+
+.navbar-brand span {
+    letter-spacing: 0.02em;
 }
 
 .navbar .nav-link {
@@ -1551,8 +1565,21 @@ footer a {
 }
 
 .ticket-brand {
-    display: block;
-    font-weight: 700;
+    align-items: center;
+    display: flex;
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+}
+
+.ticket-brand .brand-logo-sm,
+.footer-brand .brand-logo-sm {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+
+.invoice-brand {
+    align-items: center;
+    display: flex;
 }
 
 .ticket-no {

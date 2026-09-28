@@ -4,7 +4,7 @@ import java.sql.Connection;
 import database.DBConnection;
 
 /**
- * Entry point for the Public Transport Bus Ticketing System.
+ * Entry point for SA Wheels, the Public Transport Bus Ticketing System.
  *
  * The application modules will be added incrementally.
  * This class currently tests the Oracle database connection.
@@ -13,7 +13,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        System.out.println("Public Transport Bus Ticketing System");
+        System.out.println("SA Wheels - Public Transport Bus Ticketing System");
 
         try {
             Connection connection = DBConnection.getConnection();

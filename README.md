@@ -1,8 +1,8 @@
-# Public Transport Bus Ticketing System
+# SA Wheels — Public Transport Bus Ticketing System
 
 ## Project Purpose
 
-The Public Transport Bus Ticketing System is a simple Java console application for managing bus routes, calculating fares, booking tickets, generating QR ticket references, creating invoices, and maintaining travel history.
+SA Wheels, the Public Transport Bus Ticketing System, is a simple Java console application for managing bus routes, calculating fares, booking tickets, generating QR ticket references, creating invoices, and maintaining travel history.
 
 This project is designed as a college project. The implementation will use basic object-oriented programming, JDBC, SQL, and a clear module structure that is easy to understand and explain during a viva.
 
