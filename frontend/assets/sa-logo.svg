@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">SA Wheels logo</title>
+  <desc id="desc">A blue circular logo with the letters SA and a small wheel.</desc>
+  <circle cx="32" cy="32" r="30" fill="#ffffff"/>
+  <circle cx="32" cy="32" r="27" fill="#0d47a1"/>
+  <path d="M18 39c0-6 4-10 11-10h6c5 0 9 3 11 8l2 5H16z" fill="#ffffff"/>
+  <circle cx="24" cy="43" r="4" fill="#0d47a1" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="43" cy="43" r="4" fill="#0d47a1" stroke="#ffffff" stroke-width="2"/>
+  <text x="32" y="25" fill="#ffffff" font-family="Arial, sans-serif" font-size="17" font-weight="700" text-anchor="middle">SA</text>
+</svg>

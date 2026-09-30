@@ -82,7 +82,6 @@
     <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/travel-history.html</url-pattern></filter-mapping>
     <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/admin-dashboard.html</url-pattern></filter-mapping>
     <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/route-management.html</url-pattern></filter-mapping>
-    <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/route-search</url-pattern></filter-mapping>
     <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/route-management</url-pattern></filter-mapping>
     <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/booking</url-pattern></filter-mapping>
     <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/travel-history</url-pattern></filter-mapping>

@@ -1,17 +1,49 @@
 // Shared browser-side behavior for the college project frontend.
 // Route and admin actions call the Java Servlets only when deployed on Tomcat.
 document.addEventListener('DOMContentLoaded', () => {
+    applyBranding();
     showUrlMessage();
     setupBookingPage();
     setupValidation();
     setupPrintButtons();
-    setupHomeSearchMessage();
+    setupHomeRouteSearch();
     setupRouteSearchPage();
     setupRouteManagementPage();
     setupTicketPage();
     setupInvoicePage();
     setupTravelHistoryPage();
 });
+
+function applyBranding() {
+    const replacements = [
+        ['Public Transport Bus Ticketing System', 'SA Wheels'],
+        ['Bus Ticketing System', 'SA Wheels']
+    ];
+
+    // Keep the HTML pages simple while ensuring the new product name appears
+    // consistently in visible text and browser tab titles.
+    document.title = replacements.reduce(
+        (title, [oldText, newText]) => title.replaceAll(oldText, newText),
+        document.title
+    );
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const textNodes = [];
+    while (walker.nextNode()) textNodes.push(walker.currentNode);
+    textNodes.forEach((node) => {
+        replacements.forEach(([oldText, newText]) => {
+            node.nodeValue = node.nodeValue.replaceAll(oldText, newText);
+        });
+    });
+
+    document.querySelectorAll('.navbar-brand').forEach((brand) => {
+        if (brand.querySelector('.brand-logo')) return;
+        const logo = document.createElement('img');
+        logo.className = 'brand-logo';
+        logo.src = 'assets/sa-logo.svg';
+        logo.alt = 'SA Wheels logo';
+        brand.prepend(logo);
+    });
+}
 
 function showUrlMessage() {
     const messages = {
@@ -114,11 +146,77 @@ function setupPrintButtons() {
     });
 }
 
-function setupHomeSearchMessage() {
+function setupHomeRouteSearch() {
     const form = document.querySelector('#searchForm');
-    form?.addEventListener('submit', (event) => {
+    const results = document.querySelector('#homeRouteResults');
+    if (!form || !results) return;
+
+    const sourceSelect = document.querySelector('#source');
+    const destinationSelect = document.querySelector('#destination');
+    const dateInput = document.querySelector('#travelDate');
+    const localToday = getLocalDateString();
+    if (dateInput) {
+        dateInput.min = localToday;
+        dateInput.value = localToday;
+    }
+
+    const loadAllRoutes = async () => {
+        try {
+            const response = await fetch('route-search');
+            const routes = await response.json();
+            if (!response.ok) throw new Error('Route loading failed.');
+            const sources = [...new Set(routes.map((route) => route.source))].sort();
+            const destinations = [...new Set(routes.map((route) => route.destination))].sort();
+            addSelectOptions(sourceSelect, sources, 'Choose source');
+            addSelectOptions(destinationSelect, destinations, 'Choose destination');
+        } catch (error) {
+            showSearchMessage('Routes could not be loaded. Please try again later.', true);
+        }
+    };
+
+    form.addEventListener('submit', async (event) => {
         event.preventDefault();
-        document.querySelector('#searchMessage')?.classList.remove('d-none');
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+
+        const query = new URLSearchParams({
+            source: sourceSelect.value,
+            destination: destinationSelect.value
+        });
+        try {
+            const response = await fetch(`route-search?${query}`);
+            const routes = await response.json();
+            if (!response.ok) throw new Error('Route search failed.');
+            renderHomeRouteResults(results, routes);
+            showSearchMessage(routes.length ? `${routes.length} route(s) found.` : 'No routes are available for this journey.');
+        } catch (error) {
+            showSearchMessage('Route search is unavailable. Please try again later.', true);
+        }
+    });
+
+    loadAllRoutes();
+}
+
+function renderHomeRouteResults(container, routes) {
+    container.replaceChildren();
+    if (!routes.length) {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="6" class="text-center text-muted">No routes found.</td>';
+        container.appendChild(row);
+        return;
+    }
+
+    routes.forEach((route) => {
+        const row = document.createElement('tr');
+        addCell(row, route.routeNumber);
+        addCell(row, route.source);
+        addCell(row, route.destination);
+        addCell(row, route.departure);
+        addCell(row, route.arrival);
+        addCell(row, `₹${Number(route.fare).toFixed(2)}`);
+        container.appendChild(row);
     });
 }
 

@@ -1,4 +1,4 @@
-# Public Transport Bus Ticketing System
+# SA Wheels
 
 ## Project Purpose
 
@@ -171,10 +171,10 @@ frontend/
 
 ### Frontend Pages
 
-- `index.html` provides the public home page and sample route search form.
+- `index.html` provides the public SA Wheels home page and database-backed route search without booking actions.
 - `login.html` and `register.html` submit user authentication forms to Java Servlets.
 - `user-dashboard.html` links users to searching, booking, tickets, and travel history.
-- `route-search.html` displays sample routes and booking links.
+- `route-search.html` loads current routes and provides booking links for logged-in users.
 - `booking.html` displays a selected route and calculates the simulated total fare.
 - `ticket.html` displays a sample ticket and QR placeholder.
 - `invoice.html` displays a sample invoice with print support.
@@ -183,7 +183,8 @@ frontend/
 - `admin-dashboard.html` displays sample statistics and administrator navigation.
 - `route-management.html` provides a visual add-route form and sample route table.
 - `css/style.css` contains shared custom styling that complements Bootstrap.
-- `js/script.js` contains validation, password confirmation, fare calculation, print handling, and simple static form feedback.
+- `js/script.js` contains validation, password confirmation, fare calculation, route loading, print handling, branding, and search interactions.
+- `assets/sa-logo.svg` is the reusable SA Wheels logo shown in the navigation bars.
 
 Bootstrap 5.3.3 is loaded from the jsDelivr CDN on each page. The current pages use clearly labelled sample data; they do not pretend to read data from Oracle.
 
@@ -507,6 +508,33 @@ http://localhost:8080/PublicTransportTicketingSystem/
 4. Run `startup.bat` from Tomcat's `bin` folder.
 5. Open the verified application URL.
 6. Run `shutdown.bat` when the local test server is no longer required.
+
+#### Start Tomcat from PowerShell
+
+Run these commands in the same PowerShell window. The password is entered only
+for the current terminal session and is not stored in the project:
+
+```powershell
+Set-Location 'D:\apache-tomcat-10.1.60\bin'
+$env:JAVA_HOME = 'C:\Program Files\Java\jdk-17'
+$env:JRE_HOME = $env:JAVA_HOME
+$env:CATALINA_HOME = 'D:\apache-tomcat-10.1.60'
+$env:CATALINA_BASE = $env:CATALINA_HOME
+$env:DB_URL = 'jdbc:oracle:thin:@localhost:1521/XEPDB1'
+$env:DB_USERNAME = 'SYSTEM'
+$env:DB_PASSWORD = Read-Host 'Oracle password'
+.\catalina.bat run
+```
+
+Keep that terminal open while using the application. For background startup,
+replace the final command with `.\startup.bat`; use `.\shutdown.bat` to stop it.
+
+If Oracle reports `ORA-28000: the account is locked`, unlock the local
+development account in SQL*Plus as SYSDBA, then restart Tomcat:
+
+```sql
+ALTER USER SYSTEM IDENTIFIED BY "your-local-password" ACCOUNT UNLOCK CONTAINER=ALL;
+```
 
 Generated Tomcat classes and runtime libraries are kept outside the Git repository deployment copy. Database credentials must remain local and must not be committed.
 

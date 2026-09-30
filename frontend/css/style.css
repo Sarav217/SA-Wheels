@@ -171,6 +171,12 @@ a {
     letter-spacing: 0.01em;
 }
 
+.navbar-brand .brand-logo {
+    height: 30px;
+    margin-right: 0.55rem;
+    width: 30px;
+}
+
 .navbar-brand .brand-icon {
     align-items: center;
     animation: busBounce 1.6s ease-in-out infinite alternate;
