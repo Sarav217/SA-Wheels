@@ -16,6 +16,16 @@ This project is designed as a college project. The implementation will use basic
 - No Spring, Hibernate, or unnecessary frameworks
 - Java console application as the initial user interface
 
+## Quick Start in VS Code
+
+After installing JDK 17, Tomcat 10.1 and Oracle 21c XE and running the database scripts once:
+
+1. Open the project folder in VS Code (install the **Extension Pack for Java**).
+2. Press **Ctrl+Shift+B** (or run `.\run.ps1` in the terminal).
+3. Enter the Oracle password when asked, then open `http://localhost:8080/PublicTransportTicketingSystem/`.
+
+`run.ps1` copies the frontend and JARs into Tomcat, compiles the Java sources and starts Tomcat. It uses `D:\apache-tomcat-10.1.60` unless `CATALINA_HOME` is set; change that path in `run.ps1` and `.vscode/settings.json` if Tomcat is installed elsewhere. Press Ctrl+C to stop Tomcat.
+
 ## Project Modules
 
 The application is planned to contain the following modules:
