@@ -1,8 +1,11 @@
 package com.busticket.web;
 
 import com.busticket.DatabaseOperations;
+import com.busticket.model.BookingHistory;
+import com.busticket.model.Route;
 import com.busticket.model.Ticket;
 import com.busticket.util.QrCodeGenerator;
+import com.busticket.util.TicketValidity;
 
 import com.google.zxing.WriterException;
 import jakarta.servlet.ServletException;
@@ -13,6 +16,7 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 
 /** Streams a QR PNG for a ticket owned by the logged-in user. */
 public class QrCodeServlet extends HttpServlet {
@@ -31,13 +35,20 @@ public class QrCodeServlet extends HttpServlet {
         try {
             long bookingId = Long.parseLong(request.getParameter("bookingId"));
             long userId = (Long) session.getAttribute("userId");
-            if (databaseOperations.getBookingHistoryById(userId, bookingId) == null) {
+            BookingHistory booking = databaseOperations.getBookingHistoryById(userId, bookingId);
+            Ticket ticket = databaseOperations.getTicketByBookingId(bookingId);
+            if (booking == null || ticket == null) {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "Ticket not found.");
                 return;
             }
-            Ticket ticket = databaseOperations.getTicketByBookingId(bookingId);
-            if (ticket == null) {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Ticket not found.");
+
+            // The QR code is only shown while the ticket is inside its 6-hour window.
+            Route route = databaseOperations.getRouteById(booking.getRouteId());
+            LocalDateTime validUntil = TicketValidity.validUntil(ticket.getIssuedAt(),
+                    booking.getTravelDate(), route == null ? null : route.getDepartureTime());
+            if (!"VALID".equalsIgnoreCase(ticket.getTicketStatus())
+                    || TicketValidity.isExpired(validUntil)) {
+                response.sendError(HttpServletResponse.SC_GONE, "This ticket has expired.");
                 return;
             }
 

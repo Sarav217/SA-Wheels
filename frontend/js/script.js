@@ -414,12 +414,24 @@ function setupTicketPage() {
             setText('ticketPassengerCount', ticket.passengerCount);
             setText('ticketFare', `₹${Number(ticket.totalFare).toFixed(2)}`);
             setText('ticketNumber', ticket.ticketNumber);
-            setText('ticketStatus', ticket.status);
-            const image = document.querySelector('#qrImage');
+            setText('ticketValidUntil', formatDate(ticket.validUntil));
+            const statusBadge = document.querySelector('#ticketStatus');
             const placeholder = document.querySelector('#qrPlaceholder');
-            image.src = `ticket-qr?bookingId=${encodeURIComponent(bookingId)}`;
-            image.classList.remove('d-none');
-            placeholder?.classList.add('d-none');
+            if (ticket.ticketStatus !== 'VALID') {
+                // Expired or used tickets do not show a scannable QR code.
+                statusBadge.textContent = ticket.ticketStatus === 'EXPIRED' ? 'Expired' : ticket.ticketStatus;
+                statusBadge.className = 'badge text-bg-danger mb-3';
+                placeholder?.querySelector('span')?.replaceChildren('QR expired');
+                placeholder?.classList.add('qr-expired');
+                setText('qrNote', `This ticket expired at ${formatDate(ticket.validUntil)}.`);
+            } else {
+                statusBadge.textContent = ticket.status;
+                const image = document.querySelector('#qrImage');
+                image.src = `ticket-qr?bookingId=${encodeURIComponent(bookingId)}`;
+                image.classList.remove('d-none');
+                placeholder?.classList.add('d-none');
+                setText('qrNote', `QR valid until ${formatDate(ticket.validUntil)}.`);
+            }
             const invoiceLink = document.querySelector('#invoiceLink');
             if (invoiceLink) invoiceLink.href = `invoice.html?bookingId=${encodeURIComponent(bookingId)}`;
         })
