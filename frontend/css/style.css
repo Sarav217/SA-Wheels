@@ -748,6 +748,11 @@ thead th:last-child { border-top-right-radius: 14px; }
     width: 150px;
 }
 
+.qr-placeholder.qr-expired {
+    animation: none;
+    background: repeating-linear-gradient(45deg, #adb5bd 0 4px, #fff 4px 8px);
+}
+
 .qr-placeholder span {
     background: #0a1f44;
     padding: 0.25rem;

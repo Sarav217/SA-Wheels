@@ -5,6 +5,7 @@ import com.busticket.model.Booking;
 import com.busticket.model.Invoice;
 import com.busticket.model.Route;
 import com.busticket.model.Ticket;
+import com.busticket.util.TicketValidity;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -17,7 +18,9 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 /** Creates a booking, ticket, and invoice for the logged-in user. */
@@ -55,11 +58,18 @@ public class BookingServlet extends HttpServlet {
             String ticketNumber = "TKT-" + uniqueToken.substring(0, 12).toUpperCase();
             String invoiceNumber = "INV-" + uniqueToken.substring(0, 12).toUpperCase();
 
+            Timestamp travelTimestamp = Timestamp.valueOf(travelDate.atStartOfDay());
+            // Oracle DATE has no fractions of a second, so store whole seconds.
+            Timestamp issuedAt = Timestamp.valueOf(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
+            LocalDateTime validUntil = TicketValidity.validUntil(issuedAt, travelTimestamp,
+                    route.getDepartureTime());
+
             Booking booking = new Booking(0, userId, routeId, null,
-                    Timestamp.valueOf(travelDate.atStartOfDay()), seatReference,
+                    travelTimestamp, seatReference,
                     passengerCount, totalFare, "CONFIRMED");
             Ticket ticket = new Ticket(0, 0, ticketNumber,
-                    createQrPayload(route, userId, passengerCount, totalFare), null, "VALID");
+                    createQrPayload(route, userId, passengerCount, totalFare, validUntil),
+                    issuedAt, "VALID");
             Invoice invoice = new Invoice(0, 0, invoiceNumber, null, totalFare,
                     paymentMethod, "PAID");
 
@@ -75,13 +85,14 @@ public class BookingServlet extends HttpServlet {
     }
 
     private String createQrPayload(Route route, long userId, int passengerCount,
-                                   BigDecimal totalFare) {
+                                   BigDecimal totalFare, LocalDateTime validUntil) {
         return "BOOKING_ID={BOOKING_ID};USER_ID=" + userId +
                 ";ROUTE_ID=" + route.getRouteId() +
                 ";SOURCE=" + route.getSourceLocation() +
                 ";DESTINATION=" + route.getDestination() +
                 ";PASSENGERS=" + passengerCount +
-                ";FARE=" + totalFare;
+                ";FARE=" + totalFare +
+                ";VALID_UNTIL=" + validUntil;
     }
 
     private int parsePassengerCount(String value) {

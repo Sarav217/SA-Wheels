@@ -360,7 +360,8 @@ public class DatabaseOperations {
                 "(user_id, route_id, travel_date, seat_number, passenger_count, total_fare, booking_status) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?)";
         String ticketSql = "INSERT INTO tickets " +
-                "(booking_id, ticket_number, qr_code, ticket_status) VALUES (?, ?, ?, ?)";
+                "(booking_id, ticket_number, qr_code, ticket_status, issued_at) " +
+                "VALUES (?, ?, ?, ?, NVL(?, SYSDATE))";
         String invoiceSql = "INSERT INTO invoices " +
                 "(booking_id, invoice_number, amount, payment_method, payment_status) " +
                 "VALUES (?, ?, ?, ?, ?)";
@@ -390,6 +391,8 @@ public class DatabaseOperations {
                         String.valueOf(booking.getBookingId()));
                 ticketStatement.setString(3, qrCode);
                 ticketStatement.setString(4, defaultValue(ticket.getTicketStatus(), "VALID"));
+                // The ticket's 6-hour validity is worked out from this time.
+                ticketStatement.setTimestamp(5, ticket.getIssuedAt());
                 ticketStatement.executeUpdate();
                 ticket.setBookingId(booking.getBookingId());
                 ticket.setQrCode(qrCode);

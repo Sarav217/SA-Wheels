@@ -31,12 +31,13 @@
                             <dt class="col-sm-4">Passengers</dt><dd id="ticketPassengerCount" class="col-sm-8">-</dd>
                             <dt class="col-sm-4">Total fare</dt><dd id="ticketFare" class="col-sm-8">-</dd>
                             <dt class="col-sm-4">Ticket number</dt><dd id="ticketNumber" class="col-sm-8">-</dd>
+                            <dt class="col-sm-4">Valid until</dt><dd id="ticketValidUntil" class="col-sm-8">-</dd>
                         </dl>
                     </div>
                     <div class="col-md-4 text-center">
                         <div id="qrPlaceholder" class="qr-placeholder mx-auto mb-3"><span>QR loading</span></div>
                         <img id="qrImage" class="img-fluid d-none mx-auto mb-3" width="220" height="220" alt="Ticket QR code">
-                        <p class="small text-muted">Generated from the stored ticket payload.</p>
+                        <p id="qrNote" class="small text-muted">Valid for 6 hours from departure.</p>
                     </div>
                 </div>
             </div>
