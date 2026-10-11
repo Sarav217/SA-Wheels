@@ -753,7 +753,7 @@ function showTicketValidity(bookingId, ticket) {
         const notes = {
             ACTIVE: ticket.demoActive
                 ? 'Demo ticket: this QR stays active so it can always be shown.'
-                : `Show this code when you board. Tickets are valid for ${ticket.validityHours} hours after booking.`,
+                : `Show this code when you board. Tickets are valid for ${ticket.validityHours} hours from departure.`,
             EXPIRED: `This ticket expired at ${formatDate(ticket.validUntil)}. The QR code can no longer be used.`,
             CANCELLED: 'This booking was cancelled. The QR code can no longer be used.',
             USED: 'This ticket has already been used.'

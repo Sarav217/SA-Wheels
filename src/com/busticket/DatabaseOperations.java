@@ -453,20 +453,30 @@ public class DatabaseOperations {
     }
 
     /**
-     * Ticket columns plus the validity window. The expiry time and the seconds
-     * left are worked out by Oracle (SYSDATE) so they do not depend on the web
-     * server's clock. The two ? parameters are the validity hours.
+     * Ticket columns plus the validity window. The window starts at the bus
+     * departure on the travel date, or at the booking time if the bus has
+     * already left (same rule as TicketValidity). The expiry time and the
+     * seconds left are worked out by Oracle (SYSDATE) so they do not depend
+     * on the web server's clock. The two ? parameters are the validity hours.
      */
     private static final String TICKET_COLUMNS =
             "t.ticket_id, t.booking_id, t.ticket_number, t.qr_code, t.issued_at, " +
             "t.ticket_status, t.demo_active, " +
-            "t.issued_at + NUMTODSINTERVAL(?, 'HOUR') valid_until, " +
-            "GREATEST(ROUND((t.issued_at + NUMTODSINTERVAL(?, 'HOUR') - SYSDATE) * 86400), 0) " +
+            "t.valid_from + NUMTODSINTERVAL(?, 'HOUR') valid_until, " +
+            "GREATEST(ROUND((t.valid_from + NUMTODSINTERVAL(?, 'HOUR') - SYSDATE) * 86400), 0) " +
             "seconds_left ";
+
+    /** Tickets joined to their booking and route so the validity start can be worked out. */
+    private static final String TICKET_SOURCE =
+            "FROM (SELECT tk.*, b.user_id, " +
+            "GREATEST(tk.issued_at, TRUNC(b.travel_date) + " +
+            "(r.departure_time - TRUNC(r.departure_time))) valid_from " +
+            "FROM tickets tk JOIN bookings b ON b.booking_id = tk.booking_id " +
+            "JOIN routes r ON r.route_id = b.route_id) t ";
 
     /** Find the ticket belonging to one booking, including its validity window. */
     public Ticket getTicketByBookingId(long bookingId) throws SQLException {
-        String sql = "SELECT " + TICKET_COLUMNS + "FROM tickets t WHERE t.booking_id = ?";
+        String sql = "SELECT " + TICKET_COLUMNS + TICKET_SOURCE + "WHERE t.booking_id = ?";
 
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -483,9 +493,7 @@ public class DatabaseOperations {
 
     /** Load every ticket of one user so travel history can show which are still active. */
     public List<Ticket> getTicketsByUserId(long userId) throws SQLException {
-        String sql = "SELECT " + TICKET_COLUMNS +
-                "FROM tickets t JOIN bookings b ON b.booking_id = t.booking_id " +
-                "WHERE b.user_id = ?";
+        String sql = "SELECT " + TICKET_COLUMNS + TICKET_SOURCE + "WHERE t.user_id = ?";
         List<Ticket> tickets = new ArrayList<>();
 
         try (Connection connection = DBConnection.getConnection();
@@ -551,7 +559,8 @@ public class DatabaseOperations {
                 "(user_id, route_id, travel_date, seat_number, passenger_count, total_fare, booking_status) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?)";
         String ticketSql = "INSERT INTO tickets " +
-                "(booking_id, ticket_number, qr_code, ticket_status) VALUES (?, ?, ?, ?)";
+                "(booking_id, ticket_number, qr_code, ticket_status, issued_at) " +
+                "VALUES (?, ?, ?, ?, NVL(?, SYSDATE))";
         String invoiceSql = "INSERT INTO invoices " +
                 "(booking_id, invoice_number, amount, payment_method, payment_status) " +
                 "VALUES (?, ?, ?, ?, ?)";
@@ -581,6 +590,8 @@ public class DatabaseOperations {
                         String.valueOf(booking.getBookingId()));
                 ticketStatement.setString(3, qrCode);
                 ticketStatement.setString(4, defaultValue(ticket.getTicketStatus(), "VALID"));
+                // The ticket's 6-hour validity is worked out from this time.
+                ticketStatement.setTimestamp(5, ticket.getIssuedAt());
                 ticketStatement.executeUpdate();
                 ticket.setBookingId(booking.getBookingId());
                 ticket.setQrCode(qrCode);

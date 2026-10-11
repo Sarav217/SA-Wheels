@@ -1,8 +1,9 @@
--- Ticket expiry: every ticket is valid for 6 hours after ISSUED_AT.
+-- Ticket expiry: every ticket is valid for 6 hours from the bus departure on the
+-- travel date (or from ISSUED_AT if it was booked after the bus left).
 -- Run this script after 01-06. It is safe to run more than once.
 --
 -- The application works out expiry when a ticket is read
--- (ISSUED_AT + 6 hours compared with SYSDATE), so no scheduled job is needed.
+-- (start + 6 hours compared with SYSDATE), so no scheduled job is needed.
 -- Expired tickets show a blurred QR code that cannot be scanned.
 --
 -- DEMO_ACTIVE = 'Y' keeps a ticket active permanently so the ticket and QR
@@ -58,13 +59,20 @@ COMMIT;
 -- To let it expire normally again, set demo_active = 'N'.
 
 -- Check the result.
-SELECT t.ticket_id, t.booking_id, t.ticket_number,
-       TO_CHAR(t.issued_at, 'YYYY-MM-DD HH24:MI') AS issued_at,
-       TO_CHAR(t.issued_at + INTERVAL '6' HOUR, 'YYYY-MM-DD HH24:MI') AS valid_until,
+SELECT ticket_id, booking_id, ticket_number,
+       TO_CHAR(issued_at, 'YYYY-MM-DD HH24:MI') AS issued_at,
+       TO_CHAR(valid_from + INTERVAL '6' HOUR, 'YYYY-MM-DD HH24:MI') AS valid_until,
        CASE
-           WHEN t.demo_active = 'Y' THEN 'ACTIVE (DEMO)'
-           WHEN SYSDATE < t.issued_at + INTERVAL '6' HOUR THEN 'ACTIVE'
+           WHEN demo_active = 'Y' THEN 'ACTIVE (DEMO)'
+           WHEN SYSDATE < valid_from + INTERVAL '6' HOUR THEN 'ACTIVE'
            ELSE 'EXPIRED'
        END AS validity
-FROM tickets t
-ORDER BY t.ticket_id;
+FROM (
+    SELECT t.*,
+           GREATEST(t.issued_at, TRUNC(b.travel_date) +
+                    (r.departure_time - TRUNC(r.departure_time))) AS valid_from
+    FROM tickets t
+    JOIN bookings b ON b.booking_id = t.booking_id
+    JOIN routes r ON r.route_id = b.route_id
+)
+ORDER BY ticket_id;

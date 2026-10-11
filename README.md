@@ -421,7 +421,7 @@ ZXing dependencies used by the QR generator are stored in `lib/core-3.5.3.jar` a
 
 ### Ticket Expiry and Demo Tickets
 
-Each ticket is valid for **6 hours** from `TICKETS.ISSUED_AT` (`Ticket.VALIDITY_HOURS`). Expiry is calculated in SQL against the database clock (`ISSUED_AT + 6 hours` compared with `SYSDATE`) every time a ticket is read, so no scheduled job is needed.
+Each ticket is valid for **6 hours** (`Ticket.VALIDITY_HOURS`) from the bus departure on the travel date, or from the booking time if the bus has already left. Expiry is calculated in SQL against the database clock (`start + 6 hours` compared with `SYSDATE`) every time a ticket is read, so no scheduled job is needed.
 
 - The ticket page shows the issue time, the valid-until time, and a live countdown. The countdown turns amber in the last 15 minutes.
 - When a ticket expires, or its booking is cancelled, `QrCodeServlet` returns a **blurred QR image** generated on the server that cannot be scanned. The page also greys the code out and stamps it "Expired". Because the blur is applied on the server, the readable QR cannot be recovered from the browser.
