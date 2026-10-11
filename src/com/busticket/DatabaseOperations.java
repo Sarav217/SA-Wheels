@@ -1,12 +1,16 @@
 package com.busticket;
 
 import com.busticket.model.Admin;
+import com.busticket.model.AdminBooking;
+import com.busticket.model.AdminSummary;
 import com.busticket.model.Booking;
 import com.busticket.model.BookingHistory;
 import com.busticket.model.Invoice;
 import com.busticket.model.Route;
+import com.busticket.model.RouteReport;
 import com.busticket.model.Ticket;
 import com.busticket.model.User;
+import com.busticket.model.UserAccount;
 import database.DBConnection;
 
 import java.sql.Connection;
@@ -60,22 +64,173 @@ public class DatabaseOperations {
     }
 
     /**
-     * Find an admin using the related user's email as the username.
-     * The current ADMIN table does not have a separate username column.
+     * Find an admin by the ADMIN.USERNAME column (added by
+     * database/06_admin_credentials.sql). The password hash is loaded so the
+     * caller can verify it; it is never sent to the browser.
      */
     public Admin findAdminByUsername(String username) throws SQLException {
-        String sql = "SELECT a.admin_id, a.user_id, a.admin_role, a.created_at " +
-                "FROM admin a JOIN users u ON u.user_id = a.user_id " +
-                "WHERE LOWER(u.email) = LOWER(?)";
+        String sql = "SELECT admin_id, user_id, admin_role, created_at, username, password_hash " +
+                "FROM admin WHERE LOWER(username) = LOWER(?)";
 
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, username);
             try (ResultSet resultSet = statement.executeQuery()) {
-                return resultSet.next() ? mapAdmin(resultSet) : null;
+                if (!resultSet.next()) {
+                    return null;
+                }
+                Admin admin = mapAdmin(resultSet);
+                admin.setUsername(resultSet.getString("username"));
+                admin.setPasswordHash(resultSet.getString("password_hash"));
+                return admin;
             }
         } catch (SQLException exception) {
             throw new SQLException("Could not find an admin by username.", exception);
+        }
+    }
+
+    /** Count users, routes and bookings for the admin dashboard in one query. */
+    public AdminSummary getAdminSummary() throws SQLException {
+        // Admin accounts are excluded so "users" means registered passengers.
+        String sql = "SELECT " +
+                "(SELECT COUNT(*) FROM users u WHERE NOT EXISTS " +
+                "  (SELECT 1 FROM admin a WHERE a.user_id = u.user_id)) total_users, " +
+                "(SELECT COUNT(*) FROM users u WHERE u.user_status = 'ACTIVE' AND NOT EXISTS " +
+                "  (SELECT 1 FROM admin a WHERE a.user_id = u.user_id)) active_users, " +
+                "(SELECT COUNT(*) FROM routes) total_routes, " +
+                "(SELECT COUNT(*) FROM routes WHERE route_status = 'ACTIVE') active_routes, " +
+                "(SELECT COUNT(*) FROM bookings) total_bookings, " +
+                "(SELECT COUNT(*) FROM bookings WHERE booking_status = 'CONFIRMED') confirmed_bookings, " +
+                "(SELECT COUNT(*) FROM bookings WHERE booking_status = 'PENDING') pending_bookings, " +
+                "(SELECT COUNT(*) FROM bookings WHERE booking_status = 'CANCELLED') cancelled_bookings, " +
+                "(SELECT NVL(SUM(passenger_count), 0) FROM bookings " +
+                "  WHERE booking_status <> 'CANCELLED') total_passengers, " +
+                "(SELECT NVL(SUM(total_fare), 0) FROM bookings " +
+                "  WHERE booking_status = 'CONFIRMED') revenue " +
+                "FROM dual";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            resultSet.next();
+            return new AdminSummary(
+                    resultSet.getInt("total_users"),
+                    resultSet.getInt("active_users"),
+                    resultSet.getInt("total_routes"),
+                    resultSet.getInt("active_routes"),
+                    resultSet.getInt("total_bookings"),
+                    resultSet.getInt("confirmed_bookings"),
+                    resultSet.getInt("pending_bookings"),
+                    resultSet.getInt("cancelled_bookings"),
+                    resultSet.getInt("total_passengers"),
+                    resultSet.getBigDecimal("revenue"));
+        } catch (SQLException exception) {
+            throw new SQLException("Could not load the admin summary.", exception);
+        }
+    }
+
+    /** Load the most recent bookings with passenger and route details. */
+    public List<AdminBooking> getRecentBookings(int limit) throws SQLException {
+        String sql = "SELECT b.booking_id, b.user_id, b.route_id, r.route_number, " +
+                "r.source_location, r.destination, b.booking_date, b.travel_date, " +
+                "b.passenger_count, b.total_fare, b.booking_status, b.seat_number, " +
+                "u.full_name, u.email " +
+                "FROM bookings b " +
+                "JOIN routes r ON r.route_id = b.route_id " +
+                "JOIN users u ON u.user_id = b.user_id " +
+                "ORDER BY b.booking_date DESC, b.booking_id DESC " +
+                "FETCH FIRST ? ROWS ONLY";
+        List<AdminBooking> bookings = new ArrayList<>();
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, limit);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    bookings.add(new AdminBooking(
+                            resultSet.getLong("booking_id"),
+                            resultSet.getLong("user_id"),
+                            resultSet.getLong("route_id"),
+                            resultSet.getString("route_number"),
+                            resultSet.getString("source_location"),
+                            resultSet.getString("destination"),
+                            resultSet.getTimestamp("booking_date"),
+                            resultSet.getTimestamp("travel_date"),
+                            resultSet.getInt("passenger_count"),
+                            resultSet.getBigDecimal("total_fare"),
+                            resultSet.getString("booking_status"),
+                            resultSet.getString("full_name"),
+                            resultSet.getString("email"),
+                            resultSet.getString("seat_number")));
+                }
+            }
+            return bookings;
+        } catch (SQLException exception) {
+            throw new SQLException("Could not load bookings.", exception);
+        }
+    }
+
+    /** Load registered passenger accounts (not admins) with their booking counts. */
+    public List<UserAccount> getUserAccounts(int limit) throws SQLException {
+        String sql = "SELECT u.user_id, u.full_name, u.email, u.phone_number, u.created_at, " +
+                "u.user_status, " +
+                "(SELECT COUNT(*) FROM bookings b WHERE b.user_id = u.user_id) booking_count " +
+                "FROM users u " +
+                "WHERE NOT EXISTS (SELECT 1 FROM admin a WHERE a.user_id = u.user_id) " +
+                "ORDER BY u.created_at DESC, u.user_id DESC " +
+                "FETCH FIRST ? ROWS ONLY";
+        List<UserAccount> users = new ArrayList<>();
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, limit);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    users.add(new UserAccount(
+                            resultSet.getLong("user_id"),
+                            resultSet.getString("full_name"),
+                            resultSet.getString("email"),
+                            resultSet.getString("phone_number"),
+                            resultSet.getTimestamp("created_at"),
+                            resultSet.getString("user_status"),
+                            resultSet.getInt("booking_count")));
+                }
+            }
+            return users;
+        } catch (SQLException exception) {
+            throw new SQLException("Could not load users.", exception);
+        }
+    }
+
+    /** Booking totals per route, most booked first, for the reports page. */
+    public List<RouteReport> getTopRoutes(int limit) throws SQLException {
+        String sql = "SELECT r.route_number, r.source_location, r.destination, " +
+                "COUNT(b.booking_id) bookings, NVL(SUM(b.passenger_count), 0) passengers, " +
+                "NVL(SUM(b.total_fare), 0) revenue " +
+                "FROM routes r JOIN bookings b ON b.route_id = r.route_id " +
+                "WHERE b.booking_status <> 'CANCELLED' " +
+                "GROUP BY r.route_number, r.source_location, r.destination " +
+                "ORDER BY bookings DESC, revenue DESC " +
+                "FETCH FIRST ? ROWS ONLY";
+        List<RouteReport> reports = new ArrayList<>();
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, limit);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    reports.add(new RouteReport(
+                            resultSet.getString("route_number"),
+                            resultSet.getString("source_location"),
+                            resultSet.getString("destination"),
+                            resultSet.getInt("bookings"),
+                            resultSet.getInt("passengers"),
+                            resultSet.getBigDecimal("revenue")));
+                }
+            }
+            return reports;
+        } catch (SQLException exception) {
+            throw new SQLException("Could not load the route report.", exception);
         }
     }
 
@@ -297,19 +452,55 @@ public class DatabaseOperations {
         }
     }
 
-    /** Find the ticket belonging to one booking. */
+    /**
+     * Ticket columns plus the validity window. The expiry time and the seconds
+     * left are worked out by Oracle (SYSDATE) so they do not depend on the web
+     * server's clock. The two ? parameters are the validity hours.
+     */
+    private static final String TICKET_COLUMNS =
+            "t.ticket_id, t.booking_id, t.ticket_number, t.qr_code, t.issued_at, " +
+            "t.ticket_status, t.demo_active, " +
+            "t.issued_at + NUMTODSINTERVAL(?, 'HOUR') valid_until, " +
+            "GREATEST(ROUND((t.issued_at + NUMTODSINTERVAL(?, 'HOUR') - SYSDATE) * 86400), 0) " +
+            "seconds_left ";
+
+    /** Find the ticket belonging to one booking, including its validity window. */
     public Ticket getTicketByBookingId(long bookingId) throws SQLException {
-        String sql = "SELECT ticket_id, booking_id, ticket_number, qr_code, issued_at, " +
-                "ticket_status FROM tickets WHERE booking_id = ?";
+        String sql = "SELECT " + TICKET_COLUMNS + "FROM tickets t WHERE t.booking_id = ?";
 
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setLong(1, bookingId);
+            statement.setInt(1, Ticket.VALIDITY_HOURS);
+            statement.setInt(2, Ticket.VALIDITY_HOURS);
+            statement.setLong(3, bookingId);
             try (ResultSet resultSet = statement.executeQuery()) {
                 return resultSet.next() ? mapTicket(resultSet) : null;
             }
         } catch (SQLException exception) {
             throw new SQLException("Could not find the ticket.", exception);
+        }
+    }
+
+    /** Load every ticket of one user so travel history can show which are still active. */
+    public List<Ticket> getTicketsByUserId(long userId) throws SQLException {
+        String sql = "SELECT " + TICKET_COLUMNS +
+                "FROM tickets t JOIN bookings b ON b.booking_id = t.booking_id " +
+                "WHERE b.user_id = ?";
+        List<Ticket> tickets = new ArrayList<>();
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, Ticket.VALIDITY_HOURS);
+            statement.setInt(2, Ticket.VALIDITY_HOURS);
+            statement.setLong(3, userId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    tickets.add(mapTicket(resultSet));
+                }
+            }
+            return tickets;
+        } catch (SQLException exception) {
+            throw new SQLException("Could not load the user's tickets.", exception);
         }
     }
 
@@ -487,13 +678,17 @@ public class DatabaseOperations {
     }
 
     private Ticket mapTicket(ResultSet resultSet) throws SQLException {
-        return new Ticket(
+        Ticket ticket = new Ticket(
                 resultSet.getLong("ticket_id"),
                 resultSet.getLong("booking_id"),
                 resultSet.getString("ticket_number"),
                 resultSet.getString("qr_code"),
                 resultSet.getTimestamp("issued_at"),
                 resultSet.getString("ticket_status"));
+        ticket.setDemoActive("Y".equals(resultSet.getString("demo_active")));
+        ticket.setValidUntil(resultSet.getTimestamp("valid_until"));
+        ticket.setSecondsLeft(resultSet.getLong("seconds_left"));
+        return ticket;
     }
 
     private Invoice mapInvoice(ResultSet resultSet) throws SQLException {

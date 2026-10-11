@@ -1,6 +1,7 @@
 package com.busticket.web;
 
 import com.busticket.DatabaseOperations;
+import com.busticket.model.BookingHistory;
 import com.busticket.model.Ticket;
 import com.busticket.util.QrCodeGenerator;
 
@@ -14,7 +15,10 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.SQLException;
 
-/** Streams a QR PNG for a ticket owned by the logged-in user. */
+/**
+ * Streams a QR PNG for a ticket owned by the logged-in user. Active tickets
+ * get a scannable QR; expired tickets get a blurred one.
+ */
 public class QrCodeServlet extends HttpServlet {
 
     private final DatabaseOperations databaseOperations = new DatabaseOperations();
@@ -31,19 +35,21 @@ public class QrCodeServlet extends HttpServlet {
         try {
             long bookingId = Long.parseLong(request.getParameter("bookingId"));
             long userId = (Long) session.getAttribute("userId");
-            if (databaseOperations.getBookingHistoryById(userId, bookingId) == null) {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Ticket not found.");
-                return;
-            }
+            BookingHistory booking = databaseOperations.getBookingHistoryById(userId, bookingId);
             Ticket ticket = databaseOperations.getTicketByBookingId(bookingId);
-            if (ticket == null) {
+            if (booking == null || ticket == null) {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "Ticket not found.");
                 return;
             }
 
             response.setContentType("image/png");
             response.setHeader("Cache-Control", "no-store");
-            QrCodeGenerator.writePng(ticket.getQrCode(), response.getOutputStream());
+            // Expired or cancelled tickets only get an unreadable, blurred QR.
+            if (ticket.isActive(booking.getBookingStatus())) {
+                QrCodeGenerator.writePng(ticket.getQrCode(), response.getOutputStream());
+            } else {
+                QrCodeGenerator.writeBlurredPng(ticket.getQrCode(), response.getOutputStream());
+            }
         } catch (NumberFormatException exception) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Booking ID is invalid.");
         } catch (SQLException | WriterException exception) {

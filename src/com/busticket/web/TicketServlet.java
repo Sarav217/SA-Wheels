@@ -12,8 +12,13 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 
-/** Returns one ticket only when it belongs to the logged-in user. */
+/**
+ * Returns one ticket only when it belongs to the logged-in user. The JSON
+ * includes the 6-hour validity window and whether the ticket is still active.
+ */
 public class TicketServlet extends HttpServlet {
 
     private final DatabaseOperations databaseOperations = new DatabaseOperations();
@@ -50,7 +55,13 @@ public class TicketServlet extends HttpServlet {
                     "\"passengerCount\":" + booking.getPassengerCount() + "," +
                     "\"totalFare\":" + booking.getTotalFare() + "," +
                     "\"status\":" + quote(booking.getBookingStatus()) + "," +
-                    "\"ticketNumber\":" + quote(ticket.getTicketNumber()) +
+                    "\"ticketNumber\":" + quote(ticket.getTicketNumber()) + "," +
+                    "\"issuedAt\":" + quote(formatTime(ticket.getIssuedAt())) + "," +
+                    "\"validUntil\":" + quote(formatTime(ticket.getValidUntil())) + "," +
+                    "\"validityHours\":" + Ticket.VALIDITY_HOURS + "," +
+                    "\"secondsLeft\":" + ticket.getSecondsLeft() + "," +
+                    "\"demoActive\":" + ticket.isDemoActive() + "," +
+                    "\"ticketState\":" + quote(ticket.getValidityState(booking.getBookingStatus())) +
                     "}");
         } catch (NumberFormatException exception) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Booking ID is invalid.");
@@ -58,6 +69,10 @@ public class TicketServlet extends HttpServlet {
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "Ticket could not be loaded.");
         }
+    }
+
+    private String formatTime(Timestamp time) {
+        return time == null ? "" : new SimpleDateFormat("yyyy-MM-dd HH:mm").format(time);
     }
 
     private String quote(String value) {

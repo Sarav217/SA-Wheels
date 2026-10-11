@@ -1,1 +1,3 @@
 bin/
+frontend/WEB-INF/classes/
+frontend/WEB-INF/lib/

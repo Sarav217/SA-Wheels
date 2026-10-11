@@ -2,63 +2,188 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SA Wheels</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#1565C0">
+    <title>SA Wheels - Public Transport Ticketing System</title>
+    <script src="js/prefs.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css?v=13">
 </head>
 <body data-welcome="Welcome aboard! Search a route to start your journey.">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark app-header">
         <div class="container">
-            <a class="navbar-brand" href="index.html"><img class="brand-logo" src="assets/sa-logo.svg" alt="SA Wheels logo"><span>SA Wheels</span></a>
-            <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+            <a class="navbar-brand" href="index.html"><span class="brand-mark"><img class="brand-logo" src="assets/sa-logo.svg" alt=""></span><span class="brand-text">SA Wheels<span class="brand-sub">Bus ticketing</span></span></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
             <div class="collapse navbar-collapse" id="mainNav">
-                <ul class="navbar-nav ms-auto"><li class="nav-item"><a class="nav-link active" href="index.html">Home</a></li><li class="nav-item"><a class="nav-link" href="route-search.html">Routes</a></li><li class="nav-item"><a class="nav-link" href="login.html">Login</a></li><li class="nav-item"><a class="nav-link" href="register.html">Register</a></li></ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="route-search.html">Routes</a></li>
+                    <li class="nav-item"><a class="nav-link" href="login.html" data-open-login="choose">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" href="register.html">Register</a></li>
+                </ul>
             </div>
         </div>
     </nav>
 
     <main>
-        <section class="hero-section">
-            <span class="hero-orb orb-1"></span><span class="hero-orb orb-2"></span>
-            <div class="container"><div class="row align-items-center"><div class="col-lg-7">
-                <span class="hero-badge"><i class="bi bi-lightning-charge-fill"></i> Fast, simple &amp; paperless travel</span>
-                <h1>SA Wheels</h1>
-                <p class="lead">Search bus routes, reserve seats, and keep your ticket details in one simple place.</p>
-                <a class="btn btn-light btn-lg me-2 mb-2" href="login.html"><i class="bi bi-box-arrow-in-right me-1"></i>Login</a><a class="btn btn-outline-light btn-lg mb-2" href="register.html"><i class="bi bi-person-plus me-1"></i>Create account</a>
-            </div>
-            <div class="col-lg-5">
-                <div class="hero-illustration" aria-hidden="true">
-                    <i class="bi bi-bus-front hero-bus"></i>
-                    <span class="hero-chip chip-1"><i class="bi bi-geo-alt-fill"></i>Live routes</span>
-                    <span class="hero-chip chip-2"><i class="bi bi-qr-code"></i>QR e-ticket</span>
-                    <span class="hero-chip chip-3"><i class="bi bi-shield-check"></i>Secure booking</span>
+        <section class="hero">
+            <div class="container">
+                <div class="row align-items-center g-5">
+                    <div class="col-lg-7">
+                        <span class="eyebrow"><i class="bi bi-lightning-charge-fill"></i>Fast, simple &amp; paperless travel</span>
+                        <h1>Book your bus ride with <span class="grad-text">SA Wheels</span></h1>
+                        <p class="lead">Search bus routes, reserve seats, and keep your ticket details in one simple place.</p>
+                        <div class="hero-actions">
+                            <a class="btn btn-primary btn-lg btn-pill" href="login.html" data-open-login="choose"><i class="bi bi-box-arrow-in-right me-1"></i>Login</a>
+                            <a class="btn btn-outline-primary btn-lg btn-pill" href="register.html"><i class="bi bi-person-plus me-1"></i>Create account</a>
+                        </div>
+                        <div class="hero-points">
+                            <span><i class="bi bi-geo-alt-fill"></i>Live routes</span>
+                            <span><i class="bi bi-qr-code"></i>QR e-ticket</span>
+                            <span><i class="bi bi-shield-check"></i>Secure booking</span>
+                        </div>
+                    </div>
+                    <div class="col-lg-5 d-none d-md-block">
+                        <div class="hero-art" aria-hidden="true">
+                            <i class="bi bi-bus-front"></i>
+                            <span class="hero-tag t1"><i class="bi bi-geo-alt-fill"></i>Chennai → Tambaram</span>
+                            <span class="hero-tag t2"><i class="bi bi-ticket-perforated"></i>Ticket confirmed</span>
+                        </div>
+                    </div>
                 </div>
-            </div></div></div>
-            <div class="hero-wave" aria-hidden="true"><svg viewBox="0 0 1440 80" preserveAspectRatio="none"><path fill="#f4f8ff" d="M0,40 C240,80 480,0 720,30 C960,60 1200,10 1440,40 L1440,80 L0,80 Z"></path></svg></div>
+            </div>
         </section>
 
-        <section class="container"><div class="card search-panel"><div class="card-body p-4">
-            <h2 class="h4 page-title"><span class="title-icon"><i class="bi bi-search"></i></span>Search for a bus route</h2>
-            <!-- Route options and results are loaded from the Java backend. -->
-            <form id="searchForm" class="row g-3 align-items-end">
-                <div class="col-md-3"><label class="form-label" for="source">Source</label><select id="source" class="form-select" required><option value="">Loading sources...</option></select></div>
-                <div class="col-md-3"><label class="form-label" for="destination">Destination</label><select id="destination" class="form-select" required><option value="">Loading destinations...</option></select></div>
-                <div class="col-md-3"><label class="form-label" for="travelDate">Travel date</label><input id="travelDate" type="date" class="form-control" required></div>
-                <div class="col-md-3"><button class="btn btn-primary w-100" type="submit"><i class="bi bi-search me-1"></i>Search routes</button></div>
-            </form>
-            <div id="searchMessage" class="alert alert-info mt-3 mb-0 d-none"></div>
-            <div class="table-responsive mt-4">
-                <table class="table table-hover align-middle mb-0">
-                    <thead><tr><th>Route</th><th>Source</th><th>Destination</th><th>Departure</th><th>Arrival</th><th>Fare</th></tr></thead>
-                    <tbody id="homeRouteResults"><tr><td colspan="6" class="text-center text-muted">Choose a source and destination to view routes.</td></tr></tbody>
-                </table>
+        <section class="container">
+            <div class="card search-panel">
+                <div class="card-body">
+                    <h2 class="section-title"><span class="title-icon"><i class="bi bi-search"></i></span>Search for a bus route</h2>
+                    <!-- Route options and results are loaded from the Java backend. -->
+                    <form id="searchForm" class="row g-3 align-items-start">
+                        <div class="col-md-6 col-lg-3">
+                            <label class="form-label" for="source">Source</label>
+                            <select id="source" class="form-select" required><option value="">Loading sources...</option></select>
+                            <button type="button" class="locate-btn" data-locate-for="source"><i class="bi bi-crosshair"></i>Use my location</button>
+                        </div>
+                        <div class="col-md-6 col-lg-3"><label class="form-label" for="destination">Destination</label><select id="destination" class="form-select" required><option value="">Loading destinations...</option></select></div>
+                        <div class="col-md-6 col-lg-3"><label class="form-label" for="travelDate">Travel date</label><input id="travelDate" type="date" class="form-control" required></div>
+                        <div class="col-md-6 col-lg-3"><span class="form-label d-none d-md-block" aria-hidden="true">&nbsp;</span><button class="btn btn-primary w-100" type="submit"><i class="bi bi-search me-1"></i>Search routes</button></div>
+                    </form>
+                    <div id="searchMessage" class="alert alert-info mt-3 mb-0 d-none"></div>
+                    <h3 class="section-title mt-4 mb-2"><i class="bi bi-arrow-right-circle"></i>Direct routes</h3>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead><tr><th>Route</th><th>Source</th><th>Destination</th><th>Departure</th><th>Arrival</th><th>Fare</th></tr></thead>
+                            <tbody id="homeRouteResults"><tr><td colspan="6" class="text-center text-muted">Choose a source and destination to view routes.</td></tr></tbody>
+                        </table>
+                    </div>
+                    <div id="connectionSection" class="mt-4 d-none">
+                        <h3 class="section-title mb-1"><i class="bi bi-shuffle"></i>Connecting routes</h3>
+                        <p class="page-sub mb-3">Change buses at a common stop to reach your destination.</p>
+                        <div id="connectionResults" class="journey-list"></div>
+                    </div>
+                </div>
             </div>
-        </div></div></section>
+        </section>
 
-        <section class="container py-5"><div class="row g-4"><div class="col-md-4"><div class="feature-tile"><span class="card-icon"><i class="bi bi-ticket-perforated"></i></span><h2 class="h4">Simple booking</h2><p class="mb-0">Find a route and review the fare before confirming a simulated booking.</p></div></div><div class="col-md-4"><div class="feature-tile"><span class="card-icon"><i class="bi bi-qr-code-scan"></i></span><h2 class="h4">Digital ticket</h2><p class="mb-0">View a sample ticket with booking information and a placeholder for future QR integration.</p></div></div><div class="col-md-4"><div class="feature-tile"><span class="card-icon"><i class="bi bi-clock-history"></i></span><h2 class="h4">Travel history</h2><p class="mb-0">Keep previous journeys and invoice details organized in the user dashboard.</p></div></div></div></section>
+        <section class="container py-5">
+            <div class="row g-4">
+                <div class="col-md-4"><div class="feature-tile"><span class="card-icon"><i class="bi bi-ticket-perforated"></i></span><h2>Simple booking</h2><p class="mb-0">Find a route and review the fare before confirming your booking.</p></div></div>
+                <div class="col-md-4"><div class="feature-tile"><span class="card-icon"><i class="bi bi-qr-code-scan"></i></span><h2>Digital ticket</h2><p class="mb-0">Get a ticket with your booking details and a QR code to show on board.</p></div></div>
+                <div class="col-md-4"><div class="feature-tile"><span class="card-icon"><i class="bi bi-clock-history"></i></span><h2>Travel history</h2><p class="mb-0">Keep previous journeys and invoices organised in your dashboard.</p></div></div>
+            </div>
+        </section>
     </main>
-    <footer><div class="container text-center"><p class="mb-0">&copy; 2026 SA Wheels - College Project</p></div></footer>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script><script src="js/script.js"></script><script src="js/ui-effects.js"></script>
+
+    <!-- Login selection popup. Opens on the first visit, from the Login links,
+         and after a failed login (?login=user|admin). Forms post to the same
+         servlets as login.html and admin-login.html. -->
+    <div class="modal fade" id="loginChooser" tabindex="-1" aria-labelledby="loginChooserTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header modal-header-theme">
+                    <div class="chooser-head">
+                        <img class="chooser-logo" src="assets/sa-logo.svg" alt="">
+                        <div>
+                            <span class="chooser-kicker">Welcome to SA Wheels</span>
+                            <h2 class="modal-title h5 mb-0" id="loginChooserTitle">Public Transport Ticketing System</h2>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <section data-login-view="choose">
+                        <p class="text-muted text-center mb-3">How would you like to continue?</p>
+                        <div class="chooser-options">
+                            <button type="button" class="chooser-option" data-show-view="user">
+                                <span class="chooser-icon"><i class="bi bi-person-circle"></i></span>
+                                <span class="chooser-text"><strong>User Login</strong><small>Search routes, book tickets and view your history</small></span>
+                                <i class="bi bi-chevron-right chooser-arrow"></i>
+                            </button>
+                            <button type="button" class="chooser-option" data-show-view="admin">
+                                <span class="chooser-icon"><i class="bi bi-shield-lock"></i></span>
+                                <span class="chooser-text"><strong>Admin Login</strong><small>Manage routes, bookings, users and reports</small></span>
+                                <i class="bi bi-chevron-right chooser-arrow"></i>
+                            </button>
+                            <a class="chooser-option" href="register.html">
+                                <span class="chooser-icon"><i class="bi bi-person-plus"></i></span>
+                                <span class="chooser-text"><strong>Register</strong><small>New passenger? Create a free account</small></span>
+                                <i class="bi bi-chevron-right chooser-arrow"></i>
+                            </a>
+                        </div>
+                        <button type="button" class="btn btn-link w-100 mt-2" data-bs-dismiss="modal">Continue to the home page</button>
+                    </section>
+
+                    <section data-login-view="user" hidden>
+                        <h3 class="h5 mb-1"><i class="bi bi-person-circle me-2"></i>User Login</h3>
+                        <p class="text-muted small mb-3">Sign in with the email you registered with.</p>
+                        <div class="login-alert"></div>
+                        <form class="needs-validation" action="login" method="post" novalidate>
+                            <input type="hidden" name="from" value="home">
+                            <div class="mb-3"><label class="form-label" for="popupUserEmail">Email</label><input id="popupUserEmail" name="email" type="email" class="form-control" autocomplete="email" placeholder="you@example.com" required><div class="invalid-feedback">Enter a valid email address.</div></div>
+                            <div class="mb-4"><label class="form-label" for="popupUserPassword">Password</label><input id="popupUserPassword" name="password" type="password" class="form-control" autocomplete="current-password" required><div class="invalid-feedback">Password is required.</div></div>
+                            <div class="chooser-actions">
+                                <button type="button" class="btn btn-outline-primary" data-show-view="choose"><i class="bi bi-arrow-left me-1"></i>Back</button>
+                                <button class="btn btn-primary" type="submit"><i class="bi bi-box-arrow-in-right me-1"></i>Login</button>
+                            </div>
+                        </form>
+                        <p class="text-center small mt-3 mb-0">New user? <a href="register.html">Register here</a></p>
+                    </section>
+
+                    <section data-login-view="admin" hidden>
+                        <h3 class="h5 mb-1"><i class="bi bi-shield-lock me-2"></i>Admin Login</h3>
+                        <p class="text-muted small mb-3">Restricted area for transport administrators.</p>
+                        <div class="login-alert"></div>
+                        <div class="demo-creds">
+                            <div class="demo-creds-head"><i class="bi bi-info-circle"></i>Demo Credentials</div>
+                            <dl>
+                                <div><dt>Demo Admin Username</dt><dd><code>admin</code></dd></div>
+                                <div><dt>Demo Admin Password</dt><dd><code>Admin@123</code></dd></div>
+                            </dl>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-fill-demo>Use demo credentials</button>
+                        </div>
+                        <form class="needs-validation" action="admin-login" method="post" novalidate>
+                            <input type="hidden" name="from" value="home">
+                            <div class="mb-3"><label class="form-label" for="popupAdminUsername">Username</label><input id="popupAdminUsername" name="username" type="text" class="form-control" autocomplete="username" autocapitalize="none" spellcheck="false" required><div class="invalid-feedback">Enter the admin username.</div></div>
+                            <div class="mb-4"><label class="form-label" for="popupAdminPassword">Password</label><input id="popupAdminPassword" name="password" type="password" class="form-control" autocomplete="current-password" required><div class="invalid-feedback">Password is required.</div></div>
+                            <div class="chooser-actions">
+                                <button type="button" class="btn btn-outline-primary" data-show-view="choose"><i class="bi bi-arrow-left me-1"></i>Back</button>
+                                <button class="btn btn-primary" type="submit"><i class="bi bi-shield-check me-1"></i>Login as admin</button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="app-footer no-print"><div class="container"><span>&copy; 2026 SA Wheels</span><span>College project &middot; <a href="admin-login.html" data-open-login="admin">Admin login</a></span></div></footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/script.js?v=13"></script>
+    <script src="js/ui-effects.js"></script>
 </body>
 </html>

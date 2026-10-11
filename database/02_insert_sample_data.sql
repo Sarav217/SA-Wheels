@@ -9,8 +9,11 @@ VALUES ('Arun Kumar', 'arun.kumar@example.com', 'Arun@123', '9876543210');
 INSERT INTO users (full_name, email, password, phone_number)
 VALUES ('Priya Sharma', 'priya.sharma@example.com', 'Priya@123', '9876543211');
 
+-- The admin account does not use passenger login, so its USERS.PASSWORD is a
+-- placeholder. The admin username and hashed password are set by
+-- 06_admin_credentials.sql.
 INSERT INTO users (full_name, email, password, phone_number)
-VALUES ('System Administrator', 'admin@busticket.com', 'Admin@123', '9876543212');
+VALUES ('System Administrator', 'admin@busticket.com', 'ADMIN-ACCOUNT-USE-ADMIN-LOGIN', '9876543212');
 
 -- Link the administrator role to the admin user by unique email.
 INSERT INTO admin (user_id, admin_role)

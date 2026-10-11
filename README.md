@@ -23,6 +23,14 @@ After installing JDK 17, Tomcat 10.1 and Oracle 21c XE and running the database 
 1. Open the project folder in VS Code (install the **Extension Pack for Java**).
 2. Press **Ctrl+Shift+B** (or run `.\run.ps1` in the terminal).
 3. Enter the Oracle password when asked, then open `http://localhost:8080/PublicTransportTicketingSystem/`.
+4. The welcome popup offers **User Login**, **Admin Login** and **Register**. Use the demo accounts below.
+
+| Login | Username / Email | Password |
+|---|---|---|
+| User | `arun.kumar@example.com` | `Arun@123` |
+| Admin | `admin` | `Admin@123` |
+
+The admin password is stored only as a PBKDF2 hash in the `ADMIN` table (see [Admin Login and Admin Console](#admin-login-and-admin-console)). Run `database/06_admin_credentials.sql` once before the first admin login.
 
 `run.ps1` copies the frontend and JARs into Tomcat, compiles the Java sources and starts Tomcat. It uses `D:\apache-tomcat-10.1.60` unless `CATALINA_HOME` is set; change that path in `run.ps1` and `.vscode/settings.json` if Tomcat is installed elsewhere. Press Ctrl+C to stop Tomcat.
 
@@ -83,9 +91,18 @@ The database scripts are designed for Oracle Database 21c XE and SQL*Plus. Conne
 @database/01_create_tables.sql
 @database/02_insert_sample_data.sql
 @database/03_test_queries.sql
+@database/05_connecting_routes.sql
+@database/06_admin_credentials.sql
+@database/07_ticket_expiry.sql
 ```
 
-The first script creates the tables and constraints. The second script inserts development-only sample users, one admin account, and eight routes. The third script runs read-only queries for checking the data and relationships.
+Run `04_module7_booking_passenger_count.sql` only when upgrading a pre-Module 7 schema. The first script creates the tables and constraints. The second script inserts development-only sample users, one admin account, and eight routes. The third script runs read-only queries for checking the data and relationships. The fifth script adds six connecting sample routes (R601–R606) so that route search can show journeys with changes, such as Chennai Central → Tambaram → Guindy → Adyar. It is safe to run more than once. The sixth script adds the admin `USERNAME` and `PASSWORD_HASH` columns and sets up the demo admin login; it is also safe to run more than once. The seventh script adds the `TICKETS.DEMO_ACTIVE` flag used for ticket expiry (see [Ticket Expiry and Demo Tickets](#ticket-expiry-and-demo-tickets)); it is safe to run more than once.
+
+### Connecting routes and "Use my location"
+
+Route search shows direct routes from `RouteSearchServlet` and, below them, connecting journeys with up to two changes. The browser builds these from the list of active routes: a route connects to the next one when it ends where the next one starts. A connection counts as timed when the next bus leaves at least 5 minutes after the previous one arrives. Imported MTC routes only have placeholder `00:00`–`01:00` times, so connections that use them are marked "check timetable".
+
+"Use my location" under the Source field uses the browser Geolocation API. It picks the nearest stop from a table of approximate Chennai stop coordinates in `frontend/js/script.js` (`STOP_COORDINATES`), but only if that stop is within 30 km. Browsers allow geolocation only on `https` or `localhost` pages.
 
 From a command prompt, the same process can be started with SQL*Plus using a connection string appropriate for the local Oracle XE installation:
 
@@ -123,9 +140,10 @@ The sample script inserts these local-development credentials:
 |---|---|---|---|
 | Arun Kumar | `arun.kumar@example.com` | `Arun@123` | User |
 | Priya Sharma | `priya.sharma@example.com` | `Priya@123` | User |
-| System Administrator | `admin@busticket.com` | `Admin@123` | Admin |
 
-These are demonstration values only. Password hashing and secure credential handling will be considered when authentication is implemented.
+The admin account signs in on the separate Admin Login form with username `admin` and password `Admin@123`. That password is not stored in plain text: `06_admin_credentials.sql` stores a PBKDF2 hash in `ADMIN.PASSWORD_HASH`, and the linked `admin@busticket.com` user row has an unusable placeholder password, so the admin account cannot be used through the user login.
+
+These are demonstration values only.
 
 ## Development Plan
 
@@ -251,7 +269,7 @@ Module 5 adds simple Servlet-based authentication for Apache Tomcat 10.1 or late
 
 - `RegisterServlet` validates the registration form, checks for an existing email, and calls `DatabaseOperations.addUser()`.
 - `LoginServlet` checks a user's email and password, then stores the user ID and name in an HTTP session.
-- `AdminLoginServlet` checks the linked admin record and the related user's password. Because the existing `ADMIN` table has no username column, the linked user email is used as the admin username.
+- `AdminLoginServlet` looks up the admin by `ADMIN.USERNAME` and verifies the password against the PBKDF2 hash in `ADMIN.PASSWORD_HASH`. It is separate from user login (see [Admin Login and Admin Console](#admin-login-and-admin-console)).
 - `LogoutServlet` invalidates the current session and redirects to the home page.
 - `AuthFilter` protects user and admin HTML pages from unauthenticated access.
 
@@ -261,6 +279,7 @@ Servlet mappings are defined in `frontend/WEB-INF/web.xml`:
 /register       -> RegisterServlet
 /login          -> LoginServlet
 /admin-login    -> AdminLoginServlet
+/admin-data     -> AdminDataServlet
 /logout         -> LogoutServlet
 ```
 
@@ -399,6 +418,24 @@ Run this migration once on an existing Module 1–6 Oracle schema. New database 
 The `ROUTES` table still supplies source and destination details; those values are copied into the QR payload and history response through the route relationship. No duplicate source or destination columns were added to `BOOKINGS`.
 
 ZXing dependencies used by the QR generator are stored in `lib/core-3.5.3.jar` and `lib/javase-3.5.3.jar`. They must be available to the Java compiler and Tomcat web application along with `ojdbc11.jar`.
+
+### Ticket Expiry and Demo Tickets
+
+Each ticket is valid for **6 hours** from `TICKETS.ISSUED_AT` (`Ticket.VALIDITY_HOURS`). Expiry is calculated in SQL against the database clock (`ISSUED_AT + 6 hours` compared with `SYSDATE`) every time a ticket is read, so no scheduled job is needed.
+
+- The ticket page shows the issue time, the valid-until time, and a live countdown. The countdown turns amber in the last 15 minutes.
+- When a ticket expires, or its booking is cancelled, `QrCodeServlet` returns a **blurred QR image** generated on the server that cannot be scanned. The page also greys the code out and stamps it "Expired". Because the blur is applied on the server, the readable QR cannot be recovered from the browser.
+- Travel History shows a Ticket column with Active, Expired, or Cancelled.
+
+`database/07_ticket_expiry.sql` adds `TICKETS.DEMO_ACTIVE` (`'Y'`/`'N'`, default `'N'`). A ticket with `DEMO_ACTIVE = 'Y'` never expires; it is shown as "Active · Demo" with a readable QR code. The script marks the two most recent confirmed tickets of `arun.kumar@example.com` as demo tickets, so logging in as that user shows both active and expired tickets.
+
+To mark or unmark a ticket for a demo:
+
+```sql
+UPDATE tickets SET demo_active = 'Y' WHERE ticket_number = 'TKT-...';  -- always active
+UPDATE tickets SET demo_active = 'N' WHERE ticket_number = 'TKT-...';  -- normal 6-hour expiry
+COMMIT;
+```
 
 ## Module 9: Complete Frontend, Servlet, and Oracle Integration
 
@@ -547,6 +584,52 @@ ALTER USER SYSTEM IDENTIFIED BY "your-local-password" ACCOUNT UNLOCK CONTAINER=A
 ```
 
 Generated Tomcat classes and runtime libraries are kept outside the Git repository deployment copy. Database credentials must remain local and must not be committed.
+
+## Admin Login and Admin Console
+
+### Login popup
+
+Opening the home page shows a welcome popup titled **Public Transport Ticketing System**. It offers:
+
+- **User Login**: email and password, posted to `LoginServlet`. On success the user goes to `user-dashboard.html`.
+- **Admin Login**: username and password, posted to `AdminLoginServlet`. On success the admin goes to `admin-dashboard.html`. A **Demo Credentials** box shows `admin` / `Admin@123` and has a button that fills them in.
+- **Register**: opens `register.html`.
+- **Back**: returns to the choice screen.
+
+The popup also opens from the navbar **Login** link, and opens again after logout or when a protected page needs a login. Login errors appear inside the popup. The stand-alone `login.html` and `admin-login.html` pages still work and post to the same servlets. Neither login flow is duplicated.
+
+### Admin authentication
+
+- Admin login is separate from user login. It reads `ADMIN.USERNAME` and `ADMIN.PASSWORD_HASH` and never reads `USERS.PASSWORD`.
+- Passwords are hashed with PBKDF2-HMAC-SHA256 (210,000 iterations, random 16-byte salt) in `util/PasswordHasher.java`. The format is `pbkdf2$<iterations>$<salt>$<hash>`, and hashes are compared in constant time.
+- Credentials are always checked against the database. The demo values on screen are only a hint.
+- All queries use `PreparedStatement`.
+- `LoginAttemptLimiter` locks a username for 2 minutes after 5 failed admin login attempts.
+- A successful login replaces the session (protects against session fixation). Admin sessions expire after 30 minutes.
+- Database errors are logged on the server, and the browser shows a short "please try again" message.
+
+To change the admin password, generate a new hash and update the row:
+
+```powershell
+java -cp frontend/WEB-INF/classes com.busticket.util.PasswordHasher "NewPassword@1"
+```
+
+```sql
+UPDATE admin SET password_hash = '<printed hash>' WHERE username = 'admin';
+COMMIT;
+```
+
+### Admin console pages
+
+| Page | Contents |
+|---|---|
+| `admin-dashboard.html` | Total users, routes, bookings and revenue, plus recent bookings and quick actions |
+| `route-management.html` | Add, edit, delete and list routes (`RouteManagementServlet`) |
+| `admin-bookings.html` | All bookings with passenger, route, fare and status, plus search and a status filter |
+| `admin-users.html` | Registered users with status and booking count, plus search |
+| `admin-reports.html` | Revenue, passengers, bookings by status and the busiest routes |
+
+These pages read JSON from `AdminDataServlet` at `/admin-data?view=summary|bookings|users|reports`. `AuthFilter` and the servlet itself both check for an admin session. **Logout** ends the session and returns to the login popup.
 
 ## MTC Route Data Import
 

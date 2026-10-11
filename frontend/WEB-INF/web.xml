@@ -59,6 +59,10 @@
         <url-pattern>/route-management</url-pattern>
     </servlet-mapping>
 
+    <!-- JSON data for the admin overview, bookings, users and reports pages. -->
+    <servlet><servlet-name>AdminDataServlet</servlet-name><servlet-class>com.busticket.web.AdminDataServlet</servlet-class></servlet>
+    <servlet-mapping><servlet-name>AdminDataServlet</servlet-name><url-pattern>/admin-data</url-pattern></servlet-mapping>
+
     <servlet><servlet-name>BookingServlet</servlet-name><servlet-class>com.busticket.web.BookingServlet</servlet-class></servlet>
     <servlet-mapping><servlet-name>BookingServlet</servlet-name><url-pattern>/booking</url-pattern></servlet-mapping>
     <servlet><servlet-name>TravelHistoryServlet</servlet-name><servlet-class>com.busticket.web.TravelHistoryServlet</servlet-class></servlet>
@@ -81,6 +85,10 @@
     <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/invoice.html</url-pattern></filter-mapping>
     <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/travel-history.html</url-pattern></filter-mapping>
     <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/admin-dashboard.html</url-pattern></filter-mapping>
+    <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/admin-bookings.html</url-pattern></filter-mapping>
+    <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/admin-users.html</url-pattern></filter-mapping>
+    <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/admin-reports.html</url-pattern></filter-mapping>
+    <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/admin-data</url-pattern></filter-mapping>
     <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/route-management.html</url-pattern></filter-mapping>
     <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/route-management</url-pattern></filter-mapping>
     <filter-mapping><filter-name>AuthFilter</filter-name><url-pattern>/booking</url-pattern></filter-mapping>

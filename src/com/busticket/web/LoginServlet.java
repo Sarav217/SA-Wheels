@@ -18,8 +18,10 @@ public class LoginServlet extends HttpServlet {
 
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+    private static final int SESSION_TIMEOUT_SECONDS = 30 * 60;
     private final DatabaseOperations databaseOperations = new DatabaseOperations();
 
+    /** Check the email and password against USERS, then open the user dashboard. */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -43,21 +45,22 @@ public class LoginServlet extends HttpServlet {
                 return;
             }
 
-            // Store only the information needed by the protected user pages.
-            HttpSession session = request.getSession(true);
+            // Start a fresh session after login and store only what the user pages need.
+            HttpSession session = LoginRedirects.startNewSession(request, SESSION_TIMEOUT_SECONDS);
             session.setAttribute("userId", user.getUserId());
             session.setAttribute("userName", user.getFullName());
             session.setAttribute("userRole", "USER");
             response.sendRedirect(request.getContextPath() + "/user-dashboard.html");
         } catch (SQLException exception) {
             // Do not expose JDBC or Oracle details in the browser.
+            log("User login failed because of a database error.", exception);
             redirectToLogin(request, response, "database-error");
         }
     }
 
     private void redirectToLogin(HttpServletRequest request, HttpServletResponse response,
                                  String error) throws IOException {
-        response.sendRedirect(request.getContextPath() + "/login.html?error=" + error);
+        LoginRedirects.toLoginForm(request, response, "user", "/login.html", error);
     }
 
     private String value(String value) {

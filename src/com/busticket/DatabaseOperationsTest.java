@@ -21,7 +21,7 @@ public class DatabaseOperationsTest {
             require(user != null, "User lookup returned no record");
             System.out.println("User lookup passed: " + user.getFullName());
 
-            Admin admin = operations.findAdminByUsername("admin@busticket.com");
+            Admin admin = operations.findAdminByUsername("admin");
             require(admin != null, "Admin lookup returned no record");
             System.out.println("Admin lookup passed: " + admin.getAdminRole());
 
